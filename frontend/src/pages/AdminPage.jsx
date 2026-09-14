@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Users, Package, ShoppingCart, FolderTree, Plus, Edit2, Trash2, X, Save, ChevronRight, Image, Layers, BarChart2 } from 'lucide-react';
 import api from '../api/client';
+import { uploadImage } from '../api/supabase';
 import './AdminPage.css';
 
 function CategoryManager() {
@@ -120,10 +121,11 @@ function ProductManager() {
   const [categories, setCategories] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     name: '', slug: '', description: '', basePrice: '', brand: 'CoreMan',
     gender: 'MEN', categoryId: '', isActive: true, isFeatured: false,
-    images: [{ imageUrl: '' }],
+    images: [],
     variants: [{ size: '', color: '', colorHex: '#000000', sku: '', stockQuantity: 0 }]
   });
 
@@ -142,7 +144,7 @@ function ProductManager() {
   const resetForm = () => ({
     name: '', slug: '', description: '', basePrice: '', brand: 'CoreMan',
     gender: 'MEN', categoryId: '', isActive: true, isFeatured: false,
-    images: [{ imageUrl: '' }],
+    images: [],
     variants: [{ size: '', color: '', colorHex: '#000000', sku: '', stockQuantity: 0 }]
   });
 
@@ -188,9 +190,19 @@ function ProductManager() {
 
   const autoSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-  const addImage = () => setForm({ ...form, images: [...form.images, { imageUrl: '' }] });
   const removeImage = (i) => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) });
-  const updateImage = (i, val) => { const imgs = [...form.images]; imgs[i].imageUrl = val; setForm({ ...form, images: imgs }); };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setUploading(true);
+    try {
+      const urls = await Promise.all(files.map(f => uploadImage(f)));
+      setForm(prev => ({ ...prev, images: [...prev.images, ...urls.map(url => ({ imageUrl: url }))] }));
+    } catch (err) { alert('Upload failed: ' + err.message); }
+    setUploading(false);
+    e.target.value = '';
+  };
 
   const addVariant = () => setForm({ ...form, variants: [...form.variants, { size: '', color: '', colorHex: '#000000', sku: '', stockQuantity: 0 }] });
   const removeVariant = (i) => setForm({ ...form, variants: form.variants.filter((_, idx) => idx !== i) });
@@ -260,15 +272,26 @@ function ProductManager() {
           <div className="form-section">
             <div className="section-header">
               <h4><Image size={16} /> Images</h4>
-              <button type="button" className="btn-sm btn-outline" onClick={addImage}><Plus size={14} /> Add Image</button>
             </div>
-            {form.images.map((img, i) => (
-              <div key={i} className="inline-field">
-                <input placeholder="Image URL (https://...)" value={img.imageUrl} onChange={e => updateImage(i, e.target.value)} />
-                {img.imageUrl && <img src={img.imageUrl} alt="" className="img-preview" />}
-                {form.images.length > 1 && <button type="button" className="btn-icon btn-danger" onClick={() => removeImage(i)}><X size={14} /></button>}
+            <label className="file-upload-area">
+              <input type="file" accept="image/*" multiple onChange={handleFileUpload} hidden />
+              <div className="upload-content">
+                <Image size={32} />
+                <p>{uploading ? 'Uploading...' : 'Click to upload images'}</p>
+                <span className="text-muted">PNG, JPG, WebP (max 5MB each)</span>
               </div>
-            ))}
+            </label>
+            {form.images.length > 0 && (
+              <div className="image-grid">
+                {form.images.map((img, i) => (
+                  <div key={i} className="image-card">
+                    <img src={img.imageUrl} alt="" />
+                    <button type="button" className="remove-btn" onClick={() => removeImage(i)}><X size={14} /></button>
+                    {i === 0 && <span className="primary-badge">Primary</span>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="form-section">
