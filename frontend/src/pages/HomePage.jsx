@@ -10,8 +10,8 @@ export default function HomePage() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    api.get('/api/products/featured').then(r => setFeatured(r.data)).catch(() => {});
-    api.get('/api/categories').then(r => setCategories(r.data)).catch(() => {});
+    api.get('/api/products/featured').then(r => setFeatured(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+    api.get('/api/categories').then(r => setCategories(Array.isArray(r.data) ? r.data : [])).catch(() => {});
   }, []);
 
   return (
