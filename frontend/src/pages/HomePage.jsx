@@ -41,14 +41,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Categories */}
+      {/* Shop by Gender */}
       {categories.length > 0 && (
         <section className="section">
           <div className="container">
             <h2 className="section-title">Shop by Category</h2>
             <p className="section-subtitle">Find exactly what you're looking for</p>
             <div className="category-grid">
-              {categories.map(cat => (
+              {categories.filter(cat => !cat.parent).map(cat => (
                 <Link to={`/shop?category=${cat.slug}`} key={cat.id} className="category-card">
                   <img src={cat.imageUrl || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600'} alt={cat.name} />
                   <div className="category-overlay">
