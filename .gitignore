@@ -16,3 +16,5 @@ frontend/dist/
 # Env
 .env.local
 .env.production
+run-backend.sh
+*.sh
