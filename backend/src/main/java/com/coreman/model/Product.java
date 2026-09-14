@@ -1,6 +1,7 @@
 package com.coreman.model;
 
 import com.coreman.model.enums.Gender;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -38,6 +39,7 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
+    @JsonIgnoreProperties({"children", "parent"})
     private Category category;
 
     private String brand;
@@ -55,11 +57,13 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @JsonIgnoreProperties("product")
     private List<ProductVariant> variants = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
     @Builder.Default
+    @JsonIgnoreProperties("product")
     private List<ProductImage> images = new ArrayList<>();
 
     @CreationTimestamp

@@ -1,5 +1,6 @@
 package com.coreman.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,10 +33,12 @@ public class Category {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
+    @JsonIgnoreProperties({"children", "parent"})
     private Category parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
     @Builder.Default
+    @JsonIgnoreProperties({"children", "parent"})
     private List<Category> children = new ArrayList<>();
 
     @Column(name = "display_order")
