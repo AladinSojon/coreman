@@ -1,0 +1,51 @@
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.navbar-inner { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+.nav-logo {
+  font-family: var(--font-display); font-size: 1.6rem; font-weight: 800;
+  letter-spacing: 0.08em; color: var(--text-primary);
+}
+.nav-logo span { color: var(--accent); }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a {
+  font-size: 0.88rem; font-weight: 500; color: var(--text-secondary);
+  transition: color var(--transition); letter-spacing: 0.02em;
+}
+.nav-links a:hover { color: var(--accent); }
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.nav-icon {
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: none; background: transparent; color: var(--text-secondary);
+  transition: all var(--transition);
+}
+.nav-icon:hover { color: var(--accent); background: var(--accent-subtle); }
+.cart-icon { position: relative; }
+.cart-badge {
+  position: absolute; top: 2px; right: 2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent); color: #0a0a0a;
+  font-size: 0.65rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-mobile-toggle { display: none; background: transparent; border: none; color: var(--text-primary); }
+.search-bar {
+  position: absolute; top: 72px; left: 0; right: 0;
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border); padding: 16px 0;
+  animation: slideDown 0.2s ease;
+}
+.search-bar form { display: flex; align-items: center; gap: 12px; }
+.search-bar input {
+  flex: 1; background: transparent; border: none; color: var(--text-primary);
+  font-size: 1.1rem; outline: none;
+}
+.search-bar button { background: transparent; border: none; color: var(--text-muted); }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 768px) {
+  .nav-mobile-toggle { display: flex; }
+  .nav-links { display: none; position: absolute; top: 72px; left: 0; right: 0; flex-direction: column;
+    background: var(--bg-secondary); padding: 24px; gap: 20px; border-bottom: 1px solid var(--border); }
+  .nav-links.open { display: flex; }
+}

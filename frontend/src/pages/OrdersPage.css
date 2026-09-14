@@ -1,0 +1,8 @@
+.orders-list { display: flex; flex-direction: column; gap: 16px; max-width: 700px; }
+.order-card { padding: 24px; }
+.order-card:hover { transform: none; }
+.order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.order-header h3 { font-size: 1.05rem; font-weight: 700; font-family: monospace; }
+.order-items-preview { display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px; }
+.order-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border); }
+.order-total { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
