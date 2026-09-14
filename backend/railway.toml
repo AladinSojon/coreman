@@ -1,9 +1,0 @@
-[build]
-builder = "nixpacks"
-
-[build.nixpacks]
-nixPkgs = ["jdk21"]
-
-[deploy]
-startCommand = "java -jar build/libs/coreman-backend-0.0.1-SNAPSHOT.jar"
-healthcheckPath = "/api/products/featured"
