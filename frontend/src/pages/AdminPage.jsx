@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Users, Package, ShoppingCart, FolderTree, Plus, Edit2, Trash2, X, Save, ChevronRight, Image, Layers } from 'lucide-react';
+import { Users, Package, ShoppingCart, FolderTree, Plus, Edit2, Trash2, X, Save, ChevronRight, Image, Layers, BarChart2 } from 'lucide-react';
 import api from '../api/client';
 import './AdminPage.css';
 
@@ -332,7 +332,7 @@ export default function AdminPage() {
 
       <div className="admin-tabs">
         <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>
-          <BarChart3 size={16} /> Dashboard
+          <BarChart2 size={16} /> Dashboard
         </button>
         <button className={activeTab === 'categories' ? 'active' : ''} onClick={() => setActiveTab('categories')}>
           <FolderTree size={16} /> Categories
