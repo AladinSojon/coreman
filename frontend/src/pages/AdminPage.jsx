@@ -14,7 +14,7 @@ function CategoryManager() {
   useEffect(() => { loadCategories(); }, []);
 
   const loadCategories = () => {
-    api.get('/api/admin/categories').then(r => setCategories(r.data)).catch(() => {});
+    api.get('/api/admin/categories').then(r => setCategories(Array.isArray(r.data) ? r.data : [])).catch(() => {});
   };
 
   const handleSubmit = async (e) => {
@@ -129,11 +129,14 @@ function ProductManager() {
 
   useEffect(() => {
     loadProducts();
-    api.get('/api/admin/categories').then(r => setCategories(r.data)).catch(() => {});
+    api.get('/api/admin/categories').then(r => setCategories(Array.isArray(r.data) ? r.data : [])).catch(() => {});
   }, []);
 
   const loadProducts = () => {
-    api.get('/api/admin/products?size=100').then(r => setProducts(r.data.content || [])).catch(() => {});
+    api.get('/api/admin/products?size=100').then(r => {
+      const data = r.data;
+      setProducts(Array.isArray(data) ? data : (data?.content || []));
+    }).catch(() => {});
   };
 
   const resetForm = () => ({
