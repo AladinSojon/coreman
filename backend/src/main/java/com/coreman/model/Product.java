@@ -4,6 +4,7 @@ import com.coreman.model.enums.Gender;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -58,12 +59,14 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonIgnoreProperties("product")
+    @BatchSize(size = 20)
     private List<ProductVariant> variants = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
     @Builder.Default
     @JsonIgnoreProperties("product")
+    @BatchSize(size = 20)
     private List<ProductImage> images = new ArrayList<>();
 
     @CreationTimestamp
