@@ -10,6 +10,7 @@ function CategoryManager() {
   const [categories, setCategories] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ name: '', slug: '', description: '', imageUrl: '', parentId: '', displayOrder: 0 });
 
   useEffect(() => { loadCategories(); }, []);
@@ -84,8 +85,33 @@ function CategoryManager() {
               <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} />
             </div>
             <div className="form-group full-width">
-              <label>Image URL</label>
-              <input value={form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://..." />
+              <label>Category Image</label>
+              {form.imageUrl ? (
+                <div className="image-grid">
+                  <div className="image-card">
+                    <img src={form.imageUrl} alt="" />
+                    <button type="button" className="remove-btn" onClick={() => setForm({ ...form, imageUrl: '' })}><X size={14} /></button>
+                  </div>
+                </div>
+              ) : (
+                <label className="file-upload-area" style={{padding: '20px'}}>
+                  <input type="file" accept="image/*" onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    setUploading(true);
+                    try {
+                      const url = await uploadImage(file);
+                      setForm(prev => ({ ...prev, imageUrl: url }));
+                    } catch (err) { alert('Upload failed: ' + err.message); }
+                    setUploading(false);
+                    e.target.value = '';
+                  }} hidden />
+                  <div className="upload-content">
+                    <Image size={24} />
+                    <p>{uploading ? 'Uploading...' : 'Click to upload image'}</p>
+                  </div>
+                </label>
+              )}
             </div>
           </div>
           <button type="submit" className="btn-primary"><Save size={16} /> {editing ? 'Update' : 'Create'} Category</button>
