@@ -38,4 +38,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Override
     @EntityGraph(attributePaths = {"category"})
     Optional<Product> findById(Long id);
+
+    List<Product> findByCategoryId(Long categoryId);
 }

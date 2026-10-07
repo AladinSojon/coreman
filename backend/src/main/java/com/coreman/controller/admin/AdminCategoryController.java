@@ -2,9 +2,12 @@ package com.coreman.controller.admin;
 
 import com.coreman.exception.ResourceNotFoundException;
 import com.coreman.model.Category;
+import com.coreman.model.Product;
 import com.coreman.repository.CategoryRepository;
+import com.coreman.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +22,7 @@ import java.util.Map;
 public class AdminCategoryController {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
     @GetMapping
     public ResponseEntity<List<Category>> getAll() {
@@ -60,9 +64,35 @@ public class AdminCategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        categoryRepository.deleteById(id);
-        log.info("[ADMIN] Category deleted: id={}", id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+        // Nullify category reference on all products that use this category
+        List<Product> products = productRepository.findByCategoryId(id);
+        for (Product product : products) {
+            product.setCategory(null);
+        }
+        productRepository.saveAll(products);
+
+        // Reparent children to this category's parent (or make them top-level)
+        List<Category> children = category.getChildren();
+        if (children != null && !children.isEmpty()) {
+            for (Category child : children) {
+                child.setParent(category.getParent());
+            }
+            categoryRepository.saveAll(children);
+        }
+
+        try {
+            categoryRepository.deleteById(id);
+            log.info("[ADMIN] Category deleted: id={}, name={}", id, category.getName());
+            return ResponseEntity.noContent().build();
+        } catch (DataIntegrityViolationException e) {
+            log.error("[ADMIN] Cannot delete category id={}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Cannot delete category — it is still referenced by other records."));
+        }
     }
 }
+
