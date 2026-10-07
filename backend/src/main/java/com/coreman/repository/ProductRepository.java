@@ -13,10 +13,9 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @EntityGraph(attributePaths = {"images", "variants", "category"})
     Optional<Product> findBySlug(String slug);
 
-    @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.images LEFT JOIN FETCH p.variants LEFT JOIN FETCH p.category WHERE p.isActive = true AND p.isFeatured = true")
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isFeatured = true")
     List<Product> findFeaturedProducts();
 
     @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.category.slug = :categorySlug")
