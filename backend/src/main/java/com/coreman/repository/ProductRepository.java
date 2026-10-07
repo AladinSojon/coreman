@@ -39,5 +39,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @EntityGraph(attributePaths = {"category"})
     Optional<Product> findById(Long id);
 
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category WHERE p.isActive = true AND p.category.slug IN :slugs")
+    Page<Product> findByCategorySlugs(@Param("slugs") List<String> slugs, Pageable pageable);
+
     List<Product> findByCategoryId(Long categoryId);
 }

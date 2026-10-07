@@ -21,6 +21,12 @@ public class CategoryService {
         return roots.stream().map(this::mapToResponse).toList();
     }
 
+    public CategoryResponse getCategoryBySlug(String slug) {
+        Category category = categoryRepository.findBySlug(slug)
+                .orElseThrow(() -> new com.coreman.exception.ResourceNotFoundException("Category not found: " + slug));
+        return mapToResponse(category);
+    }
+
     private CategoryResponse mapToResponse(Category category) {
         List<CategoryResponse> children = category.getChildren().stream()
                 .map(this::mapToResponse)

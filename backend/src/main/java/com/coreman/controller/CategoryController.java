@@ -26,6 +26,11 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
+    @GetMapping("/{slug}")
+    public ResponseEntity<CategoryResponse> getBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(categoryService.getCategoryBySlug(slug));
+    }
+
     @GetMapping("/{slug}/products")
     public ResponseEntity<Page<ProductResponse>> getProductsByCategory(
             @PathVariable String slug, @PageableDefault(size = 12) Pageable pageable) {

@@ -2,9 +2,11 @@ package com.coreman.service;
 
 import com.coreman.dto.response.ProductResponse;
 import com.coreman.exception.ResourceNotFoundException;
+import com.coreman.model.Category;
 import com.coreman.model.Product;
 import com.coreman.model.ProductImage;
 import com.coreman.model.ProductVariant;
+import com.coreman.repository.CategoryRepository;
 import com.coreman.repository.ProductRepository;
 import com.coreman.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
     private final ReviewRepository reviewRepository;
 
     public Page<ProductResponse> getProducts(Pageable pageable) {
@@ -40,7 +43,21 @@ public class ProductService {
     }
 
     public Page<ProductResponse> getProductsByCategory(String categorySlug, Pageable pageable) {
-        return productRepository.findByCategorySlug(categorySlug, pageable).map(this::mapToResponse);
+        // Collect this category + all descendant slugs
+        Category category = categoryRepository.findBySlug(categorySlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categorySlug));
+        List<String> slugs = new java.util.ArrayList<>();
+        collectSlugs(category, slugs);
+        return productRepository.findByCategorySlugs(slugs, pageable).map(this::mapToResponse);
+    }
+
+    private void collectSlugs(Category category, List<String> slugs) {
+        slugs.add(category.getSlug());
+        if (category.getChildren() != null) {
+            for (Category child : category.getChildren()) {
+                collectSlugs(child, slugs);
+            }
+        }
     }
 
     public Page<ProductResponse> searchProducts(String query, Pageable pageable) {
