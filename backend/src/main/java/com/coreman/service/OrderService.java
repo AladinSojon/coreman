@@ -28,6 +28,7 @@ public class OrderService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProductVariantRepository variantRepository;
+    private final AddressRepository addressRepository;
 
     @Transactional
     public OrderResponse placeOrder(Long userId, PlaceOrderRequest request) {
@@ -50,15 +51,22 @@ public class OrderService {
             subtotal = subtotal.add(variant.getEffectivePrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
         }
 
-        BigDecimal shippingCost = subtotal.compareTo(new BigDecimal("100")) >= 0
-                ? BigDecimal.ZERO : new BigDecimal("9.99");
-        BigDecimal tax = subtotal.multiply(new BigDecimal("0.08")).setScale(2, java.math.RoundingMode.HALF_UP);
-        BigDecimal total = subtotal.add(shippingCost).add(tax);
+        BigDecimal shippingCost = subtotal.compareTo(new BigDecimal("2000")) >= 0
+                ? BigDecimal.ZERO : new BigDecimal("120");
+        BigDecimal tax = BigDecimal.ZERO;
+        BigDecimal total = subtotal.add(shippingCost);
+
+        // Look up shipping address
+        Address shippingAddress = null;
+        if (request.shippingAddressId() != null) {
+            shippingAddress = addressRepository.findById(request.shippingAddressId()).orElse(null);
+        }
 
         // Create order
         Order order = Order.builder()
                 .orderNumber("CM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .user(user)
+                .shippingAddress(shippingAddress)
                 .status(OrderStatus.PENDING)
                 .paymentStatus(PaymentStatus.UNPAID)
                 .subtotal(subtotal)
