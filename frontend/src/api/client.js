@@ -18,8 +18,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const status = error.response?.status;
-    // Try token refresh on 401 (Unauthorized) or 403 (Forbidden — expired token on protected routes)
-    if ((status === 401 || status === 403) && !originalRequest._retry) {
+    const url = originalRequest?.url || '';
+
+    // Don't try to refresh on auth endpoints (prevents infinite loops)
+    const isAuthEndpoint = url.includes('/api/auth/');
+
+    // Try token refresh on 401 or 403 (expired token), but not on auth endpoints
+    if ((status === 401 || status === 403) && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
@@ -33,6 +38,7 @@ api.interceptors.response.use(
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
+          return Promise.reject(error);
         }
       }
     }
