@@ -47,7 +47,26 @@ function CategoryManager() {
 
   const autoSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-  const parentCategories = categories.filter(c => !c.parent);
+  // Flatten categories into a hierarchical list for the parent dropdown
+  const flattenCategories = (cats, depth = 0) => {
+    let result = [];
+    for (const cat of cats) {
+      result.push({ ...cat, depth, label: '\u00A0\u00A0'.repeat(depth) + (depth > 0 ? '└ ' : '') + cat.name });
+      if (cat.children?.length > 0) {
+        result = result.concat(flattenCategories(cat.children, depth + 1));
+      }
+    }
+    return result;
+  };
+
+  // Use the public categories API which returns a nested tree
+  const [treeCategories, setTreeCategories] = useState([]);
+  useEffect(() => {
+    api.get('/api/categories').then(r => setTreeCategories(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+  }, [categories]);
+
+  const allCategoriesFlat = flattenCategories(treeCategories)
+    .filter(c => c.id !== editing); // exclude self to prevent circular reference
 
   return (
     <div className="admin-section">
@@ -73,7 +92,7 @@ function CategoryManager() {
               <label>Parent Category</label>
               <select value={form.parentId} onChange={e => setForm({ ...form, parentId: e.target.value })}>
                 <option value="">None (Top Level)</option>
-                {parentCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {allCategoriesFlat.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
             <div className="form-group">
