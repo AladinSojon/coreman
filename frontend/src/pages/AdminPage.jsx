@@ -276,7 +276,7 @@ function ProductManager() {
               <input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Price (USD) *</label>
+              <label>Price (BDT) *</label>
               <input type="number" step="0.01" value={form.basePrice} onChange={e => setForm({ ...form, basePrice: e.target.value })} required />
             </div>
             <div className="form-group">
@@ -368,7 +368,7 @@ function ProductManager() {
               <tr key={p.id}>
                 <td>{p.images?.[0] ? <img src={p.images[0].imageUrl} alt="" className="table-img" /> : '—'}</td>
                 <td><strong>{p.name}</strong>{p.isFeatured && <span className="badge">Featured</span>}</td>
-                <td>${p.basePrice}</td>
+                <td>৳{p.basePrice}</td>
                 <td>{p.category?.name || '—'}</td>
                 <td>{p.variants?.length || 0}</td>
                 <td><span className={`status ${p.isActive ? 'active' : 'inactive'}`}>{p.isActive ? 'Active' : 'Inactive'}</span></td>

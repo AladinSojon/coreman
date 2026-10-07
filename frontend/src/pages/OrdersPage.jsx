@@ -44,7 +44,7 @@ export default function OrdersPage() {
                   ))}
                 </div>
                 <div className="order-footer">
-                  <span className="order-total">${o.total?.toFixed(2)}</span>
+                  <span className="order-total">৳{o.total?.toFixed(2)}</span>
                   <span className="text-muted" style={{ fontSize: '0.82rem' }}>{new Date(o.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>

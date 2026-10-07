@@ -21,7 +21,7 @@ export default function ProductCard({ product }) {
         <p className="product-card-brand">{product.brand}</p>
         <h3 className="product-card-name">{product.name}</h3>
         <div className="product-card-meta">
-          <span className="product-card-price">${product.basePrice?.toFixed(2)}</span>
+          <span className="product-card-price">৳{product.basePrice?.toFixed(2)}</span>
           {product.averageRating && (
             <span className="product-card-rating"><Star size={14} fill="var(--accent)" stroke="var(--accent)" /> {product.averageRating}</span>
           )}

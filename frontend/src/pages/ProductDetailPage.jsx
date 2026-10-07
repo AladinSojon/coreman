@@ -75,7 +75,7 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          <p className="pdp-price">${price?.toFixed(2)}</p>
+          <p className="pdp-price">৳{price?.toFixed(2)}</p>
           <p className="pdp-description">{product.description}</p>
 
           {/* Color picker */}

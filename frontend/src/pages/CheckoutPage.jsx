@@ -7,7 +7,7 @@ import './CheckoutPage.css';
 export default function CheckoutPage() {
   const { cart, clearCart } = useCart();
   const navigate = useNavigate();
-  const [address, setAddress] = useState({ street: '', city: '', state: '', zipCode: '', country: 'US' });
+  const [address, setAddress] = useState({ street: '', city: '', zipCode: '', country: 'Bangladesh' });
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
 
@@ -26,7 +26,8 @@ export default function CheckoutPage() {
     } finally { setProcessing(false); }
   };
 
-  const total = cart.subtotal + (cart.subtotal >= 100 ? 0 : 9.99) + cart.subtotal * 0.08;
+  const shipping = cart.subtotal >= 2000 ? 0 : 120;
+  const total = cart.subtotal + shipping;
 
   return (
     <div className="page container">
@@ -41,14 +42,11 @@ export default function CheckoutPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div className="input-group"><label>City</label><input className="input" value={address.city} onChange={e => setAddress({...address, city: e.target.value})} required /></div>
-            <div className="input-group"><label>State</label><input className="input" value={address.state} onChange={e => setAddress({...address, state: e.target.value})} required /></div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div className="input-group"><label>ZIP Code</label><input className="input" value={address.zipCode} onChange={e => setAddress({...address, zipCode: e.target.value})} required /></div>
-            <div className="input-group"><label>Country</label><input className="input" value={address.country} onChange={e => setAddress({...address, country: e.target.value})} required /></div>
           </div>
+          <div className="input-group"><label>Country</label><input className="input" value={address.country} onChange={e => setAddress({...address, country: e.target.value})} required /></div>
           <button className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 16 }} disabled={processing}>
-            {processing ? 'Processing...' : `Place Order — $${total.toFixed(2)}`}
+            {processing ? 'Processing...' : `Place Order — ৳${total.toFixed(2)}`}
           </button>
         </form>
 
@@ -61,14 +59,13 @@ export default function CheckoutPage() {
                 <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>{item.productName}</p>
                 <p className="text-muted" style={{ fontSize: '0.82rem' }}>{item.size} / {item.color} × {item.quantity}</p>
               </div>
-              <span style={{ fontWeight: 600 }}>${item.totalPrice?.toFixed(2)}</span>
+              <span style={{ fontWeight: 600 }}>৳{item.totalPrice?.toFixed(2)}</span>
             </div>
           ))}
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
-          <div className="summary-row"><span>Subtotal</span><span>${cart.subtotal?.toFixed(2)}</span></div>
-          <div className="summary-row"><span>Shipping</span><span>{cart.subtotal >= 100 ? 'Free' : '$9.99'}</span></div>
-          <div className="summary-row"><span>Tax</span><span>${(cart.subtotal * 0.08).toFixed(2)}</span></div>
-          <div className="summary-row total"><span>Total</span><span>${total.toFixed(2)}</span></div>
+          <div className="summary-row"><span>Subtotal</span><span>৳{cart.subtotal?.toFixed(2)}</span></div>
+          <div className="summary-row"><span>Shipping</span><span>{cart.subtotal >= 2000 ? 'Free' : '৳120'}</span></div>
+          <div className="summary-row total"><span>Total</span><span>৳{total.toFixed(2)}</span></div>
         </div>
       </div>
     </div>
