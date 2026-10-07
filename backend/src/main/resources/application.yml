@@ -8,6 +8,11 @@ spring:
     password: ${DATABASE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+
   jpa:
     hibernate:
       ddl-auto: update

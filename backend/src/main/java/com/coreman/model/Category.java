@@ -26,9 +26,10 @@ public class Category {
     @Column(unique = true, nullable = false)
     private String slug;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
