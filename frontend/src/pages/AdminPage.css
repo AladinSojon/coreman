@@ -96,3 +96,79 @@
   .variant-row { flex-wrap: wrap; }
   .admin-tabs { overflow-x: auto; }
 }
+
+/* ===== Order Management ===== */
+.order-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.payment-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.payment-badge.paid { background: #10b98120; color: #10b981; }
+.payment-badge.unpaid { background: #ef444420; color: #ef4444; }
+.payment-badge.refunded { background: #6b728020; color: #6b7280; }
+
+.status-select {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+.status-select:focus { outline: none; border-color: var(--accent); }
+
+.expanded-row { background: var(--bg-secondary) !important; }
+
+.order-detail-row td { padding: 0 !important; border-top: none !important; }
+
+.order-detail-content {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 24px;
+  padding: 20px 24px;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border);
+  border-bottom: 2px solid var(--accent);
+}
+
+.order-detail-items h4,
+.order-detail-address h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.order-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.order-detail-item:last-child { border-bottom: none; }
+
+.order-detail-address p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}

@@ -30,6 +30,7 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"password", "addresses", "hibernateLazyInitializer"})
     private User user;
 
     @ManyToOne(fetch = FetchType.EAGER)

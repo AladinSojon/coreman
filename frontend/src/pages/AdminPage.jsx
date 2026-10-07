@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Users, Package, ShoppingCart, FolderTree, Plus, Edit2, Trash2, X, Save, ChevronRight, Image, Layers, BarChart2 } from 'lucide-react';
+import { Users, Package, ShoppingCart, FolderTree, Plus, Edit2, Trash2, X, Save, ChevronRight, Image, Layers, BarChart2, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../api/client';
 import { uploadImage } from '../api/supabase';
 import './AdminPage.css';
@@ -386,6 +386,139 @@ function ProductManager() {
   );
 }
 
+const STATUS_COLORS = {
+  PENDING: '#f59e0b',
+  CONFIRMED: '#3b82f6',
+  SHIPPED: '#8b5cf6',
+  DELIVERED: '#10b981',
+  CANCELLED: '#ef4444',
+};
+
+function OrderManager() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState(null);
+
+  useEffect(() => { loadOrders(); }, []);
+
+  const loadOrders = () => {
+    setLoading(true);
+    api.get('/api/admin/orders?size=50&sort=createdAt,desc')
+      .then(r => setOrders(r.data?.content || r.data || []))
+      .catch(() => setOrders([]))
+      .finally(() => setLoading(false));
+  };
+
+  const updateStatus = async (orderId, newStatus) => {
+    try {
+      await api.put(`/api/admin/orders/${orderId}/status`, { status: newStatus });
+      loadOrders();
+    } catch (err) { alert('Failed to update status: ' + (err.response?.data?.message || err.message)); }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <h2><ClipboardList size={20} /> Orders ({orders.length})</h2>
+        <button className="btn-primary btn-sm" onClick={loadOrders}>Refresh</button>
+      </div>
+
+      {loading ? (
+        <div className="text-center text-muted" style={{ padding: 40 }}>Loading orders...</div>
+      ) : orders.length === 0 ? (
+        <div className="text-center text-muted" style={{ padding: 40 }}>No orders yet</div>
+      ) : (
+        <div className="admin-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map(order => (
+                <>
+                  <tr key={order.id} className={expandedOrder === order.id ? 'expanded-row' : ''} style={{ cursor: 'pointer' }} onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}>
+                    <td><strong>{order.orderNumber}</strong></td>
+                    <td>{order.user?.firstName} {order.user?.lastName}<br/><span className="text-muted" style={{ fontSize: '0.78rem' }}>{order.user?.email}</span></td>
+                    <td>{order.items?.length || 0}</td>
+                    <td><strong>৳{order.total}</strong></td>
+                    <td>
+                      <span className="order-status-badge" style={{ background: STATUS_COLORS[order.status] + '20', color: STATUS_COLORS[order.status], border: `1px solid ${STATUS_COLORS[order.status]}40` }}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`payment-badge ${order.paymentStatus?.toLowerCase()}`}>
+                        {order.paymentStatus || 'UNPAID'}
+                      </span>
+                    </td>
+                    <td className="text-muted" style={{ fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{formatDate(order.createdAt)}</td>
+                    <td onClick={e => e.stopPropagation()}>
+                      <select
+                        value={order.status}
+                        onChange={e => updateStatus(order.id, e.target.value)}
+                        className="status-select"
+                        style={{ borderColor: STATUS_COLORS[order.status] }}
+                      >
+                        <option value="PENDING">Pending</option>
+                        <option value="CONFIRMED">Confirmed</option>
+                        <option value="SHIPPED">Shipped</option>
+                        <option value="DELIVERED">Delivered</option>
+                        <option value="CANCELLED">Cancelled</option>
+                      </select>
+                    </td>
+                  </tr>
+                  {expandedOrder === order.id && (
+                    <tr key={`${order.id}-detail`} className="order-detail-row">
+                      <td colSpan={8}>
+                        <div className="order-detail-content">
+                          <div className="order-detail-items">
+                            <h4>Order Items</h4>
+                            {order.items?.map((item, i) => (
+                              <div key={i} className="order-detail-item">
+                                <span className="text-muted" style={{ minWidth: 24 }}>{item.quantity}×</span>
+                                <span style={{ flex: 1 }}>{item.productName || `Product #${item.productId}`}</span>
+                                <span>{item.size} / {item.color}</span>
+                                <strong>৳{item.totalPrice || item.unitPrice * item.quantity}</strong>
+                              </div>
+                            ))}
+                          </div>
+                          {order.shippingAddress && (
+                            <div className="order-detail-address">
+                              <h4>Shipping Address</h4>
+                              <p>{order.shippingAddress.street}</p>
+                              <p>{order.shippingAddress.city}, {order.shippingAddress.zipCode}</p>
+                              <p>{order.shippingAddress.country}</p>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const { isAdmin } = useAuth();
   const [stats, setStats] = useState(null);
@@ -404,6 +537,9 @@ export default function AdminPage() {
       <div className="admin-tabs">
         <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>
           <BarChart2 size={16} /> Dashboard
+        </button>
+        <button className={activeTab === 'orders' ? 'active' : ''} onClick={() => setActiveTab('orders')}>
+          <ClipboardList size={16} /> Orders
         </button>
         <button className={activeTab === 'categories' ? 'active' : ''} onClick={() => setActiveTab('categories')}>
           <FolderTree size={16} /> Categories
@@ -430,6 +566,7 @@ export default function AdminPage() {
         </div>
       )}
 
+      {activeTab === 'orders' && <OrderManager />}
       {activeTab === 'categories' && <CategoryManager />}
       {activeTab === 'products' && <ProductManager />}
     </div>
