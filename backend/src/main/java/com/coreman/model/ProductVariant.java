@@ -30,7 +30,7 @@ public class ProductVariant {
     @Column(name = "color_hex")
     private String colorHex;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = false)
     private String sku;
 
     @Column(name = "price_override", precision = 10, scale = 2)
