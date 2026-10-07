@@ -21,6 +21,11 @@ spring:
       hibernate:
         format_sql: true
 
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+    default-property-inclusion: non_null
+
   servlet:
     multipart:
       max-file-size: 10MB
