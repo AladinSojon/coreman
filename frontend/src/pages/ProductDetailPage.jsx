@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Heart, Star, Minus, Plus, ChevronLeft } from 'lucide-react';
+import { ShoppingBag, Heart, Star, Minus, Plus, ChevronLeft, Zap } from 'lucide-react';
 import api from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -44,6 +44,17 @@ export default function ProductDetailPage() {
     setAdding(true);
     try { await addToCart(selectedVariant.id, quantity); } catch {}
     setTimeout(() => setAdding(false), 1000);
+  };
+
+  const handleBuyNow = async () => {
+    if (!user) { navigate('/login'); return; }
+    if (!selectedVariant) return;
+    setAdding(true);
+    try {
+      await addToCart(selectedVariant.id, quantity);
+      navigate('/checkout');
+    } catch {}
+    setAdding(false);
   };
 
   return (
@@ -124,6 +135,11 @@ export default function ProductDetailPage() {
               disabled={!selectedSize || adding}>
               <ShoppingBag size={18} />
               {adding ? 'Added!' : 'Add to Cart'}
+            </button>
+            <button className="btn btn-buy-now btn-lg" style={{ flex: 1 }} onClick={handleBuyNow}
+              disabled={!selectedSize || adding}>
+              <Zap size={18} />
+              Buy Now
             </button>
             <button className="btn btn-secondary btn-lg"><Heart size={18} /></button>
           </div>

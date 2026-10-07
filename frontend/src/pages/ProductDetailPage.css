@@ -34,6 +34,22 @@
 .pdp-quantity span { width: 48px; text-align: center; font-weight: 600; }
 
 .pdp-actions { display: flex; gap: 12px; margin-top: 32px; }
+
+.btn-buy-now {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all var(--transition);
+}
+.btn-buy-now:hover { background: linear-gradient(135deg, #d97706, #dc2626); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3); }
+.btn-buy-now:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
 .stock-warning { color: var(--warning); font-size: 0.88rem; margin-top: 12px; font-weight: 500; }
 
 @media (max-width: 768px) { .pdp-layout { grid-template-columns: 1fr; gap: 32px; } }
