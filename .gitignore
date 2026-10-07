@@ -18,3 +18,5 @@ frontend/dist/
 .env.production
 run-backend.sh
 *.sh
+.vercel
+.env*
