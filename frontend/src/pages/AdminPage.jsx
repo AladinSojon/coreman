@@ -520,14 +520,17 @@ function OrderManager() {
 }
 
 export default function AdminPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, loading } = useAuth();
   const [stats, setStats] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
+    if (!isAdmin) return;
     api.get('/api/admin/dashboard').then(r => setStats(r.data)).catch(() => {});
-  }, []);
+  }, [isAdmin]);
 
+  // Wait for the saved session to load before deciding; otherwise a page reload redirects admins away.
+  if (loading) return null;
   if (!isAdmin) return <Navigate to="/" />;
 
   return (
