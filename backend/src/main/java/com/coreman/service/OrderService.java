@@ -6,6 +6,7 @@ import com.coreman.exception.BadRequestException;
 import com.coreman.exception.ResourceNotFoundException;
 import com.coreman.model.*;
 import com.coreman.model.enums.OrderStatus;
+import com.coreman.model.enums.PaymentMethod;
 import com.coreman.model.enums.PaymentStatus;
 import com.coreman.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -56,11 +57,14 @@ public class OrderService {
         BigDecimal tax = BigDecimal.ZERO;
         BigDecimal total = subtotal.add(shippingCost);
 
-        // Look up shipping address
-        Address shippingAddress = null;
-        if (request.shippingAddressId() != null) {
-            shippingAddress = addressRepository.findById(request.shippingAddressId()).orElse(null);
+        // Look up shipping address — it must belong to this user.
+        Address shippingAddress = addressRepository.findById(request.shippingAddressId())
+                .filter(a -> a.getUser() != null && a.getUser().getId().equals(userId))
+                .orElseThrow(() -> new BadRequestException("Shipping address not found"));
+        if (shippingAddress.getPhone() == null || shippingAddress.getPhone().isBlank()) {
+            throw new BadRequestException("A phone number is required so the courier can reach you");
         }
+        PaymentMethod paymentMethod = request.paymentMethod() != null ? request.paymentMethod() : PaymentMethod.COD;
 
         // Create order
         Order order = Order.builder()
@@ -68,6 +72,7 @@ public class OrderService {
                 .user(user)
                 .shippingAddress(shippingAddress)
                 .status(OrderStatus.PENDING)
+                .paymentMethod(paymentMethod)
                 .paymentStatus(PaymentStatus.UNPAID)
                 .subtotal(subtotal)
                 .shippingCost(shippingCost)
@@ -171,6 +176,7 @@ public class OrderService {
                 order.getOrderNumber(),
                 order.getStatus().name(),
                 order.getPaymentStatus().name(),
+                (order.getPaymentMethod() != null ? order.getPaymentMethod() : PaymentMethod.COD).name(),
                 order.getSubtotal(),
                 order.getShippingCost(),
                 order.getTax(),

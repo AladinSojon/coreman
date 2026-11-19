@@ -18,14 +18,22 @@ export default function HomePage() {
     <div className="home">
       {/* Hero */}
       <section className="hero">
-        <div className="hero-bg" />
-        <div className="container hero-content">
-          <span className="badge badge-accent">New Season 2026</span>
-          <h1>Redefine Your<br /><span className="text-accent">Everyday Style</span></h1>
-          <p>Premium clothing & lifestyle essentials crafted for the modern individual. Timeless design meets uncompromising quality.</p>
-          <div className="hero-actions">
-            <Link to="/shop" className="btn btn-primary btn-lg">Shop Collection <ArrowRight size={18} /></Link>
-            <Link to="/shop?gender=MEN" className="btn btn-secondary btn-lg">Men's Essentials</Link>
+        <div className="container hero-inner">
+          <div className="hero-content">
+            <p className="hero-eyebrow">New Season 2026</p>
+            <h1>Redefine your<br /><span className="text-accent">everyday style.</span></h1>
+            <p className="hero-lead">Premium clothing & lifestyle essentials crafted for the modern individual. Timeless design meets uncompromising quality.</p>
+            <div className="hero-actions">
+              <Link to="/shop" className="btn btn-primary btn-lg">Shop Collection <ArrowRight size={18} /></Link>
+              <Link to="/shop?gender=MEN" className="btn btn-secondary btn-lg">Men's Essentials</Link>
+            </div>
+          </div>
+          <div className="hero-media">
+            <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=1200" alt="Model wearing a CoreMan oversized tee" />
+            <Link to="/shop?category=drop-shoulder-tshirts" className="hero-tag">
+              <span>Drop Shoulder Tees</span>
+              <strong>Shop the edit <ArrowRight size={14} /></strong>
+            </Link>
           </div>
         </div>
       </section>
@@ -34,7 +42,7 @@ export default function HomePage() {
       <section className="features">
         <div className="container">
           <div className="features-grid">
-            <div className="feature"><Truck size={28} /><div><h4>Free Shipping</h4><p>On orders over $100</p></div></div>
+            <div className="feature"><Truck size={28} /><div><h4>Free Shipping</h4><p>On orders over ৳2,000</p></div></div>
             <div className="feature"><Shield size={28} /><div><h4>Secure Checkout</h4><p>256-bit SSL encryption</p></div></div>
             <div className="feature"><RotateCcw size={28} /><div><h4>Easy Returns</h4><p>30-day return policy</p></div></div>
           </div>

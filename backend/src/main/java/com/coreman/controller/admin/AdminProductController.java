@@ -49,6 +49,7 @@ public class AdminProductController {
         product.setSlug((String) body.get("slug"));
         product.setDescription((String) body.get("description"));
         product.setBasePrice(new BigDecimal(body.get("basePrice").toString()));
+        product.setCompareAtPrice(parsePrice(body.get("compareAtPrice")));
         product.setBrand((String) body.get("brand"));
         product.setGender(Gender.valueOf(((String) body.get("gender")).toUpperCase()));
         product.setIsActive(body.get("isActive") != null ? (Boolean) body.get("isActive") : true);
@@ -104,6 +105,7 @@ public class AdminProductController {
         if (body.containsKey("slug")) product.setSlug((String) body.get("slug"));
         if (body.containsKey("description")) product.setDescription((String) body.get("description"));
         if (body.containsKey("basePrice")) product.setBasePrice(new BigDecimal(body.get("basePrice").toString()));
+        if (body.containsKey("compareAtPrice")) product.setCompareAtPrice(parsePrice(body.get("compareAtPrice")));
         if (body.containsKey("brand")) product.setBrand((String) body.get("brand"));
         if (body.containsKey("gender")) product.setGender(Gender.valueOf(((String) body.get("gender")).toUpperCase()));
         if (body.containsKey("isActive")) product.setIsActive((Boolean) body.get("isActive"));
@@ -155,5 +157,12 @@ public class AdminProductController {
         productRepository.deleteById(id);
         log.info("[ADMIN] Product deleted: id={}", id);
         return ResponseEntity.noContent().build();
+    }
+
+    /** Blank / null / zero means "not on sale". */
+    private static BigDecimal parsePrice(Object raw) {
+        if (raw == null || raw.toString().isBlank()) return null;
+        BigDecimal value = new BigDecimal(raw.toString());
+        return value.signum() > 0 ? value : null;
     }
 }

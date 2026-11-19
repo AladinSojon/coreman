@@ -199,6 +199,7 @@ function ProductManager() {
       ...form,
       categoryId: form.categoryId ? Number(form.categoryId) : null,
       basePrice: Number(form.basePrice),
+      compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : null,
       images: form.images.filter(i => i.imageUrl),
       variants: form.variants.filter(v => v.size && v.color)
     };
@@ -216,7 +217,7 @@ function ProductManager() {
   const handleEdit = (product) => {
     setForm({
       name: product.name, slug: product.slug, description: product.description || '',
-      basePrice: product.basePrice, brand: product.brand || 'CoreMan',
+      basePrice: product.basePrice, compareAtPrice: product.compareAtPrice ?? '', brand: product.brand || 'CoreMan',
       gender: product.gender, categoryId: product.category?.id || '',
       isActive: product.isActive ?? true, isFeatured: product.isFeatured ?? false,
       images: product.images?.length ? product.images.map(i => ({ imageUrl: i.imageUrl })) : [{ imageUrl: '' }],
@@ -278,6 +279,14 @@ function ProductManager() {
             <div className="form-group">
               <label>Price (BDT) *</label>
               <input type="number" step="0.01" value={form.basePrice} onChange={e => setForm({ ...form, basePrice: e.target.value })} required />
+            </div>
+            <div className="form-group">
+              <label>Compare-at price (BDT)</label>
+              <input type="number" step="0.01" min="0" value={form.compareAtPrice ?? ''} placeholder="Leave empty if not on sale"
+                onChange={e => setForm({ ...form, compareAtPrice: e.target.value })} />
+              {form.compareAtPrice && Number(form.compareAtPrice) <= Number(form.basePrice) && (
+                <small style={{ color: 'var(--warning)' }}>Must be higher than the price to show as a sale.</small>
+              )}
             </div>
             <div className="form-group">
               <label>Brand</label>
@@ -368,7 +377,7 @@ function ProductManager() {
               <tr key={p.id}>
                 <td>{p.images?.[0] ? <img src={p.images[0].imageUrl} alt="" className="table-img" /> : '—'}</td>
                 <td><strong>{p.name}</strong>{p.isFeatured && <span className="badge">Featured</span>}</td>
-                <td>৳{p.basePrice}</td>
+                <td>৳{p.basePrice}{p.compareAtPrice > p.basePrice && <s className="text-muted" style={{ marginLeft: 6, fontSize: '0.8rem' }}>৳{p.compareAtPrice}</s>}</td>
                 <td>{p.category?.name || '—'}</td>
                 <td>{p.variants?.length || 0}</td>
                 <td><span className={`status ${p.isActive ? 'active' : 'inactive'}`}>{p.isActive ? 'Active' : 'Inactive'}</span></td>
@@ -500,9 +509,13 @@ function OrderManager() {
                           {order.shippingAddress && (
                             <div className="order-detail-address">
                               <h4>Shipping Address</h4>
+                              {order.shippingAddress.recipientName && <p><strong>{order.shippingAddress.recipientName}</strong></p>}
+                              {order.shippingAddress.phone && <p><a href={`tel:${order.shippingAddress.phone}`}>{order.shippingAddress.phone}</a></p>}
                               <p>{order.shippingAddress.street}</p>
                               <p>{order.shippingAddress.city}, {order.shippingAddress.zipCode}</p>
                               <p>{order.shippingAddress.country}</p>
+                              <h4 style={{ marginTop: 16 }}>Payment</h4>
+                              <p>{order.paymentMethod === 'COD' || !order.paymentMethod ? 'Cash on Delivery' : order.paymentMethod} · {order.paymentStatus}</p>
                             </div>
                           )}
                         </div>

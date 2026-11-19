@@ -9,6 +9,7 @@ public record OrderResponse(
         String orderNumber,
         String status,
         String paymentStatus,
+        String paymentMethod,
         BigDecimal subtotal,
         BigDecimal shippingCost,
         BigDecimal tax,

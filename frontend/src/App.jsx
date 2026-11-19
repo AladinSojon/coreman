@@ -2,6 +2,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
+import WishlistPage from './pages/WishlistPage';
+import InfoPage from './pages/InfoPage';
+import NotFoundPage from './pages/NotFoundPage';
+import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -22,6 +27,8 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
+          <WishlistProvider>
+            <ScrollToTop />
             <Navbar />
             <Routes>
               <Route path="/" element={<HomePage />} />
@@ -33,8 +40,12 @@ export default function App() {
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/orders" element={<OrdersPage />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="/pages/:slug" element={<InfoPage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
             <Footer />
+          </WishlistProvider>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>

@@ -1,0 +1,23 @@
+.info-page { max-width: 760px; padding-bottom: 40px; }
+.info-page .page-title { margin-bottom: 16px; }
+.info-lead { font-size: 1.15rem; color: var(--text-secondary); margin-bottom: 24px; }
+.info-body { color: var(--text-secondary); line-height: 1.75; }
+.info-body p { margin-bottom: 16px; }
+.info-body h2 { font-family: var(--font-display); font-size: 1.2rem; color: var(--text-primary); margin: 32px 0 12px; }
+.info-body ul, .info-body ol { padding-left: 22px; margin-bottom: 16px; }
+.info-body li { margin-bottom: 6px; }
+.info-body strong { color: var(--text-primary); }
+.info-body a:not(.btn) { color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+.info-body a:not(.btn):hover { color: var(--accent); }
+
+.info-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+.info-table th, .info-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: left; }
+.info-table tr:last-child th, .info-table tr:last-child td { border-bottom: none; }
+.info-table th { font-weight: 500; color: var(--text-secondary); }
+.info-table td { font-weight: 700; color: var(--text-primary); text-align: right; }
+
+.contact-list { display: grid; gap: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin: 8px 0 24px; }
+.contact-list > div { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.contact-list > div:last-child { border-bottom: none; }
+.contact-list dt { color: var(--text-secondary); }
+.contact-list dd { font-weight: 600; color: var(--text-primary); text-align: right; }

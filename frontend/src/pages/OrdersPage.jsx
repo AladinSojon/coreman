@@ -1,51 +1,94 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Package, ChevronRight } from 'lucide-react';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { Package, CheckCircle2 } from 'lucide-react';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
+import { formatPrice } from '../utils/price';
 import './OrdersPage.css';
 
+const STATUS_LABEL = { PENDING: 'Pending', CONFIRMED: 'Confirmed', SHIPPED: 'Shipped', DELIVERED: 'Delivered', CANCELLED: 'Cancelled' };
+const PAYMENT_LABEL = { COD: 'Cash on Delivery' };
+
 export default function OrdersPage() {
+  const { user, loading: authLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const placed = searchParams.get('placed');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(null);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    api.get('/api/orders', { params: { size: 20 } })
-      .then(r => setOrders(r.data.content || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const load = () => api.get('/api/orders', { params: { size: 20 } })
+    .then(r => setOrders(r.data.content || []))
+    .catch(() => setError('Could not load your orders.'))
+    .finally(() => setLoading(false));
 
-  const statusColor = (s) => ({ PENDING: 'var(--warning)', CONFIRMED: 'var(--accent)', SHIPPED: '#60a5fa', DELIVERED: 'var(--success)', CANCELLED: 'var(--error)' }[s] || 'var(--text-muted)');
+  useEffect(() => { if (user) load(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (authLoading) return null;
+  if (!user) return <Navigate to="/login" />;
+
+  const cancel = async (orderNumber) => {
+    if (!window.confirm(`Cancel order ${orderNumber}?`)) return;
+    setCancelling(orderNumber); setError('');
+    try {
+      await api.post(`/api/orders/${orderNumber}/cancel`);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not cancel the order.');
+    } finally { setCancelling(null); }
+  };
 
   return (
     <div className="page container">
       <h1 className="page-title">My Orders</h1>
-      {loading ? <div className="skeleton" style={{ height: 200 }} /> :
+
+      {placed && (
+        <div className="order-placed">
+          <CheckCircle2 size={22} />
+          <div>
+            <strong>Thank you — order {placed} is placed.</strong>
+            <p>We'll call you to confirm before it ships. Pay in cash when it arrives.</p>
+          </div>
+        </div>
+      )}
+      {error && <div className="auth-error" style={{ maxWidth: 700, marginBottom: 16 }}>{error}</div>}
+
+      {loading ? <div className="skeleton" style={{ height: 200, maxWidth: 700 }} /> :
         orders.length === 0 ? (
-          <div className="empty-state">
-            <Package size={64} strokeWidth={1} style={{ color: 'var(--text-muted)', marginBottom: 24 }} />
+          <div className="empty-state" style={{ textAlign: 'center', padding: '80px 0' }}>
+            <Package size={56} strokeWidth={1} style={{ color: 'var(--text-muted)', marginBottom: 20 }} />
             <h3>No orders yet</h3>
-            <Link to="/shop" className="btn btn-primary" style={{ marginTop: 24 }}>Start Shopping</Link>
+            <Link to="/shop" className="btn btn-primary" style={{ marginTop: 24 }}>Start shopping</Link>
           </div>
         ) : (
           <div className="orders-list">
             {orders.map(o => (
-              <div key={o.id} className="order-card card">
+              <div key={o.id} className={`order-card card ${o.orderNumber === placed ? 'highlight' : ''}`}>
                 <div className="order-header">
                   <div>
-                    <span className="text-muted" style={{ fontSize: '0.82rem' }}>Order</span>
+                    <span className="text-muted" style={{ fontSize: '0.82rem' }}>
+                      {new Date(o.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
                     <h3>{o.orderNumber}</h3>
                   </div>
-                  <span className="badge" style={{ background: `${statusColor(o.status)}22`, color: statusColor(o.status) }}>{o.status}</span>
+                  <span className={`status-pill status-${o.status?.toLowerCase()}`}>{STATUS_LABEL[o.status] || o.status}</span>
                 </div>
-                <div className="order-items-preview">
-                  {o.items?.slice(0, 3).map((item, i) => (
-                    <span key={i} className="text-muted" style={{ fontSize: '0.88rem' }}>{item.productName} × {item.quantity}</span>
+                <ul className="order-items-preview">
+                  {o.items?.map((item, i) => (
+                    <li key={i}>{item.productName} <span className="text-muted">· {item.size} / {item.color} × {item.quantity}</span></li>
                   ))}
-                </div>
+                </ul>
                 <div className="order-footer">
-                  <span className="order-total">৳{o.total?.toFixed(2)}</span>
-                  <span className="text-muted" style={{ fontSize: '0.82rem' }}>{new Date(o.createdAt).toLocaleDateString()}</span>
+                  <div>
+                    <span className="order-total">{formatPrice(o.total)}</span>
+                    <span className="order-pay">{PAYMENT_LABEL[o.paymentMethod] || o.paymentMethod} · {o.paymentStatus === 'PAID' ? 'Paid' : 'Unpaid'}</span>
+                  </div>
+                  {(o.status === 'PENDING' || o.status === 'CONFIRMED') && (
+                    <button className="btn btn-secondary btn-sm" disabled={cancelling === o.orderNumber} onClick={() => cancel(o.orderNumber)}>
+                      {cancelling === o.orderNumber ? 'Cancelling…' : 'Cancel order'}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

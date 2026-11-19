@@ -24,6 +24,11 @@ public class Address {
     @Builder.Default
     private String label = "Home";
 
+    @Column(name = "recipient_name")
+    private String recipientName;
+
+    private String phone;
+
     @Column(nullable = false)
     private String street;
 

@@ -93,6 +93,11 @@ export default function Navbar() {
   };
 
   return (
+    <>
+    <div className="announce-bar">
+      Free shipping on orders over ৳2,000
+      <Link to="/shop">Shop now</Link>
+    </div>
     <nav className="navbar">
       <div className="container navbar-inner">
         <button className="nav-mobile-toggle" onClick={() => setMenuOpen(!menuOpen)}>
@@ -292,5 +297,6 @@ export default function Navbar() {
         </div>
       )}
     </nav>
+    </>
   );
 }

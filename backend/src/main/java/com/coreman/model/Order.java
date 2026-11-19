@@ -1,6 +1,7 @@
 package com.coreman.model;
 
 import com.coreman.model.enums.OrderStatus;
+import com.coreman.model.enums.PaymentMethod;
 import com.coreman.model.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -58,6 +59,12 @@ public class Order {
 
     @Column(name = "payment_intent_id")
     private String paymentIntentId;
+
+    // Nullable at the DB level so the column can be added to existing tables; treat null as COD.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method")
+    @Builder.Default
+    private PaymentMethod paymentMethod = PaymentMethod.COD;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)

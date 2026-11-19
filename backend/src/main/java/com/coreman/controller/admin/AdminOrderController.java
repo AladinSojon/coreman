@@ -3,6 +3,8 @@ package com.coreman.controller.admin;
 import com.coreman.exception.ResourceNotFoundException;
 import com.coreman.model.Order;
 import com.coreman.model.enums.OrderStatus;
+import com.coreman.model.enums.PaymentMethod;
+import com.coreman.model.enums.PaymentStatus;
 import com.coreman.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,7 +31,14 @@ public class AdminOrderController {
     public ResponseEntity<Order> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        order.setStatus(OrderStatus.valueOf(body.get("status")));
+        OrderStatus status = OrderStatus.valueOf(body.get("status"));
+        order.setStatus(status);
+        // Cash on Delivery: the courier collects payment at delivery.
+        if (status == OrderStatus.DELIVERED
+                && (order.getPaymentMethod() == null || order.getPaymentMethod() == PaymentMethod.COD)
+                && order.getPaymentStatus() == PaymentStatus.UNPAID) {
+            order.setPaymentStatus(PaymentStatus.PAID);
+        }
         return ResponseEntity.ok(orderRepository.save(order));
     }
 }

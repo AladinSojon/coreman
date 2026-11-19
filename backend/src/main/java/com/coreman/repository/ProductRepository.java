@@ -5,13 +5,23 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+
+    @Query("SELECT DISTINCT v.size FROM ProductVariant v WHERE v.product.isActive = true AND v.size IS NOT NULL AND v.size <> ''")
+    List<String> findActiveSizes();
+
+    @Query("SELECT DISTINCT v.color, v.colorHex FROM ProductVariant v WHERE v.product.isActive = true AND v.color IS NOT NULL AND v.color <> '' ORDER BY v.color")
+    List<Object[]> findActiveColors();
+
+    @Query("SELECT MIN(p.basePrice), MAX(p.basePrice) FROM Product p WHERE p.isActive = true")
+    List<Object[]> findActivePriceRange();
 
     @EntityGraph(attributePaths = {"category"})
     Optional<Product> findBySlug(String slug);

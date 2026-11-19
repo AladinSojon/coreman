@@ -26,6 +26,18 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getProductReviews(slug, pageable));
     }
 
+    @GetMapping("/summary")
+    public ResponseEntity<ReviewService.ReviewSummary> getSummary(@PathVariable String slug) {
+        return ResponseEntity.ok(reviewService.getSummary(slug));
+    }
+
+    /** Public endpoint; the principal is present only when the caller sent a valid token. */
+    @GetMapping("/eligibility")
+    public ResponseEntity<ReviewService.ReviewEligibility> getEligibility(
+            @PathVariable String slug, @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(reviewService.checkEligibility(slug, principal != null ? principal.getId() : null));
+    }
+
     @PostMapping
     public ResponseEntity<ReviewService.ReviewResponse> addReview(
             @PathVariable String slug, @AuthenticationPrincipal UserPrincipal principal,

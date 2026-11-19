@@ -136,6 +136,16 @@ public class DataSeeder implements CommandLineRunner {
                         variant("L", "Acid Blue", "#4A6FA5", "CM-ADS-ABL-L", 12)
                 ));
 
+        // Put a couple of items on sale so the Sale collection isn't empty on a fresh install.
+        productRepository.findBySlug("acid-wash-drop-shoulder-tee").ifPresent(p -> {
+            p.setCompareAtPrice(new BigDecimal("74.99"));
+            productRepository.save(p);
+        });
+        productRepository.findBySlug("washed-drop-shoulder-tee").ifPresent(p -> {
+            p.setCompareAtPrice(new BigDecimal("49.99"));
+            productRepository.save(p);
+        });
+
         log.info("[SEED] Database seeded with {} drop shoulder t-shirts", productRepository.count());
     }
 

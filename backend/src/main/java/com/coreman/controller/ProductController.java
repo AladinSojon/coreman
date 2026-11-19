@@ -1,5 +1,7 @@
 package com.coreman.controller;
 
+import com.coreman.dto.request.ProductFilter;
+import com.coreman.dto.response.ProductFacets;
 import com.coreman.dto.response.ProductResponse;
 import com.coreman.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +11,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -18,9 +21,32 @@ public class ProductController {
 
     private final ProductService productService;
 
+    /**
+     * Public product listing with optional filters. Example:
+     * /api/products?gender=MEN&category=menswear&size=M&color=Black&minPrice=40&maxPrice=60&sale=true&sort=price_asc&page=0&size=12
+     * Note: "pageSize" is the page length because "size" is the clothing-size filter.
+     */
     @GetMapping
-    public ResponseEntity<Page<ProductResponse>> getProducts(@PageableDefault(size = 12) Pageable pageable) {
-        return ResponseEntity.ok(productService.getProducts(pageable));
+    public ResponseEntity<Page<ProductResponse>> getProducts(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String size,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) Boolean featured,
+            @RequestParam(required = false) Boolean sale,
+            @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int pageSize) {
+        ProductFilter filter = new ProductFilter(q, category, gender, minPrice, maxPrice, size, color, featured, sale, sort);
+        return ResponseEntity.ok(productService.filterProducts(filter, page, pageSize));
+    }
+
+    @GetMapping("/filters")
+    public ResponseEntity<ProductFacets> getFilterOptions() {
+        return ResponseEntity.ok(productService.getFacets());
     }
 
     @GetMapping("/featured")

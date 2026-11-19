@@ -1,6 +1,7 @@
 package com.coreman.dto.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record ProductResponse(
@@ -9,6 +10,7 @@ public record ProductResponse(
         String slug,
         String description,
         BigDecimal basePrice,
+        BigDecimal compareAtPrice,
         String brand,
         String gender,
         Boolean isFeatured,
@@ -16,6 +18,7 @@ public record ProductResponse(
         String categorySlug,
         Double averageRating,
         Long reviewCount,
+        LocalDateTime createdAt,
         List<VariantResponse> variants,
         List<ImageResponse> images
 ) {

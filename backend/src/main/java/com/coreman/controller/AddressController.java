@@ -31,6 +31,7 @@ public class AddressController {
     public ResponseEntity<Address> create(@AuthenticationPrincipal UserPrincipal principal, @RequestBody Address address) {
         User user = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        address.setId(null); // never let the client overwrite an existing address
         address.setUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(addressRepository.save(address));
     }
