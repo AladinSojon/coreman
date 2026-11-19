@@ -49,6 +49,10 @@ stripe:
 cors:
   allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
 
+# Inserts any missing standard categories on startup (never edits existing ones)
+coreman:
+  seed-categories: ${SEED_CATEGORIES:true}
+
 # Logging
 logging:
   level:

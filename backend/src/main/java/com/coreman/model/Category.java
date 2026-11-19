@@ -20,7 +20,8 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    // Not unique: "Jeans" can exist under both Menswear and Womenswear. The slug is the unique key.
+    @Column(nullable = false)
     private String name;
 
     @Column(unique = true, nullable = false)
@@ -38,6 +39,7 @@ public class Category {
     private Category parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+    @OrderBy("displayOrder ASC, id ASC")
     @Builder.Default
     @JsonIgnoreProperties({"children", "parent"})
     private List<Category> children = new ArrayList<>();

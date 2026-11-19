@@ -17,6 +17,7 @@ import java.util.List;
 
 @Slf4j
 @Component
+@org.springframework.core.annotation.Order(2) // after CategorySeeder
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
@@ -40,13 +41,9 @@ public class DataSeeder implements CommandLineRunner {
                 .email("demo@coreman.com").passwordHash(passwordEncoder.encode("demo123"))
                 .firstName("Demo").lastName("User").role(Role.CUSTOMER).build());
 
-        // Categories — Men only for now
-        Category menswear = categoryRepository.save(Category.builder().name("Menswear").slug("menswear")
-                .description("Premium men's clothing").displayOrder(1)
-                .imageUrl("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600").build());
-        Category dropShoulder = categoryRepository.save(Category.builder().name("Drop Shoulder T-Shirts").slug("drop-shoulder-tshirts")
-                .description("Relaxed fit drop shoulder tees").parent(menswear).displayOrder(1)
-                .imageUrl("https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600").build());
+        // Categories are created by CategorySeeder (runs first); sample products go into Drop Shoulder Tees.
+        Category dropShoulder = categoryRepository.findBySlug("drop-shoulder-tshirts")
+                .orElseThrow(() -> new IllegalStateException("CategorySeeder must run before DataSeeder"));
 
         // Drop Shoulder T-Shirts — Men
         seedProduct("Heavyweight Drop Shoulder Tee", "heavyweight-drop-shoulder-tee",

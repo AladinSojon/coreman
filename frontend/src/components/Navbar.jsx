@@ -250,11 +250,9 @@ export default function Navbar() {
                     className="mega-menu-cat-link"
                     onClick={closeMegaMenu}
                   >
-                    {cat.imageUrl && (
-                      <div className="mega-menu-cat-img">
-                        <img src={cat.imageUrl} alt={cat.name} />
-                      </div>
-                    )}
+                    <div className={`mega-menu-cat-img ${cat.imageUrl ? '' : 'placeholder'}`} aria-hidden="true">
+                      {cat.imageUrl ? <img src={cat.imageUrl} alt="" loading="lazy" /> : cat.name.charAt(0)}
+                    </div>
                     <span>{cat.name}</span>
                   </Link>
                 ))}
@@ -271,7 +269,7 @@ export default function Navbar() {
                 <img
                   src={megaMenu === 'men'
                     ? 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=400&h=500&fit=crop'
-                    : 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=400&h=500&fit=crop'
+                    : 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&h=500&fit=crop'
                   }
                   alt={`${megaMenu === 'men' ? "Men's" : "Women's"} Collection`}
                 />

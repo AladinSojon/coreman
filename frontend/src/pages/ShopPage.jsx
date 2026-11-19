@@ -240,7 +240,7 @@ export default function ShopPage() {
             </div>
           ) : products.length === 0 ? (
             <div className="empty-state">
-              <h3>{error || 'No products match these filters'}</h3>
+              <h3>{error || (activeFilters.length > 0 ? 'No products match these filters' : 'No products here yet')}</h3>
               <p>{activeFilters.length > 0 ? 'Try removing a filter or two.' : 'Check back soon — new drops are on the way.'}</p>
               {activeFilters.length > 0
                 ? <button className="btn btn-primary" style={{ marginTop: 20 }} onClick={clearAll}>Clear filters</button>
