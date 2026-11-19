@@ -6,6 +6,10 @@ import com.coreman.model.*;
 import com.coreman.model.enums.Gender;
 import com.coreman.repository.*;
 import com.coreman.service.AdminAnalyticsService;
+import com.coreman.service.ProductService;
+import org.springframework.beans.factory.annotation.Value;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -38,6 +42,7 @@ public class AdminProductController {
     private final CartItemRepository cartItemRepository;
     private final WishlistRepository wishlistRepository;
     private final ReviewRepository reviewRepository;
+    private final ProductService productService;
 
     /**
      * ?q=name/slug/sku&categoryId=3&status=active|inactive|featured|sale|lowstock|outofstock&page=0&size=20
@@ -63,6 +68,12 @@ public class AdminProductController {
                 case "active" -> p.add(cb.isTrue(root.get("isActive")));
                 case "inactive" -> p.add(cb.isFalse(root.get("isActive")));
                 case "featured" -> p.add(cb.isTrue(root.get("isFeatured")));
+                case "new" -> {
+                    LocalDateTime now = LocalDateTime.now();
+                    p.add(cb.or(
+                            cb.and(cb.isNotNull(root.get("newUntil")), cb.greaterThan(root.get("newUntil"), now)),
+                            cb.and(cb.isNull(root.get("newUntil")), cb.greaterThanOrEqualTo(root.get("createdAt"), now.minusDays(newDays)))));
+                }
                 case "sale" -> p.add(cb.greaterThan(root.get("compareAtPrice"), root.<BigDecimal>get("basePrice")));
                 case "lowstock", "outofstock" -> {
                     Subquery<Long> sq = query.subquery(Long.class);
@@ -102,7 +113,7 @@ public class AdminProductController {
 
         Product copy = Product.builder()
                 .name(src.getName() + " (copy)").slug(slug).description(src.getDescription())
-                .basePrice(src.getBasePrice()).compareAtPrice(src.getCompareAtPrice())
+                .basePrice(src.getBasePrice()).compareAtPrice(src.getCompareAtPrice()).newUntil(null)
                 .category(src.getCategory()).brand(src.getBrand()).gender(src.getGender())
                 .isActive(false).isFeatured(false).build();
         for (ProductImage img : src.getImages()) {
@@ -133,6 +144,7 @@ public class AdminProductController {
         product.setDescription((String) body.get("description"));
         product.setBasePrice(new BigDecimal(body.get("basePrice").toString()));
         product.setCompareAtPrice(parsePrice(body.get("compareAtPrice")));
+        product.setNewUntil(parseDate(body.get("newUntil")));
         product.setBrand((String) body.get("brand"));
         product.setGender(Gender.valueOf(((String) body.get("gender")).toUpperCase()));
         product.setIsActive(body.get("isActive") != null ? (Boolean) body.get("isActive") : true);
@@ -189,6 +201,7 @@ public class AdminProductController {
         if (body.containsKey("description")) product.setDescription((String) body.get("description"));
         if (body.containsKey("basePrice")) product.setBasePrice(new BigDecimal(body.get("basePrice").toString()));
         if (body.containsKey("compareAtPrice")) product.setCompareAtPrice(parsePrice(body.get("compareAtPrice")));
+        if (body.containsKey("newUntil")) product.setNewUntil(parseDate(body.get("newUntil")));
         if (body.containsKey("brand")) product.setBrand((String) body.get("brand"));
         if (body.containsKey("gender")) product.setGender(Gender.valueOf(((String) body.get("gender")).toUpperCase()));
         if (body.containsKey("isActive")) product.setIsActive((Boolean) body.get("isActive"));
@@ -253,6 +266,28 @@ public class AdminProductController {
         log.info("[ADMIN] Product deleted: id={}", id);
         return ResponseEntity.noContent().build();
     }
+
+    /** "yyyy-MM-dd" (end of that day) or full ISO date-time; blank/null = automatic. */
+    private static LocalDateTime parseDate(Object raw) {
+        if (raw == null || raw.toString().isBlank()) return null;
+        String s = raw.toString().trim();
+        try {
+            return s.length() == 10 ? LocalDate.parse(s).atTime(23, 59, 59) : LocalDateTime.parse(s);
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid 'new until' date: " + s);
+        }
+    }
+
+    /** Which products the shop currently treats as New / Best Seller, for admin badges. */
+    @GetMapping("/collections")
+    public ResponseEntity<Map<String, Object>> collections() {
+        return ResponseEntity.ok(Map.of(
+                "newDays", newDays,
+                "bestSellerIds", productService.bestSellerRanking()));
+    }
+
+    @Value("${coreman.collections.new-days:30}")
+    private int newDays;
 
     /** Blank / null / zero means "not on sale". */
     private static BigDecimal parsePrice(Object raw) {

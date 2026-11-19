@@ -81,13 +81,13 @@ export default function Navbar() {
 
   const quickLinks = {
     men: [
-      { label: 'New Arrivals', to: '/shop?gender=MEN&sort=newest' },
-      { label: 'Best Sellers', to: '/shop?gender=MEN&featured=true' },
+      { label: 'New Arrivals', to: '/shop?gender=MEN&newArrivals=true' },
+      { label: 'Best Sellers', to: '/shop?gender=MEN&bestSellers=true' },
       { label: 'Sale', to: '/shop?gender=MEN&sale=true' },
     ],
     women: [
-      { label: 'New Arrivals', to: '/shop?gender=WOMEN&sort=newest' },
-      { label: 'Best Sellers', to: '/shop?gender=WOMEN&featured=true' },
+      { label: 'New Arrivals', to: '/shop?gender=WOMEN&newArrivals=true' },
+      { label: 'Best Sellers', to: '/shop?gender=WOMEN&bestSellers=true' },
       { label: 'Sale', to: '/shop?gender=WOMEN&sale=true' },
     ],
   };

@@ -37,10 +37,13 @@ public class ProductController {
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Boolean featured,
             @RequestParam(required = false) Boolean sale,
-            @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(required = false) Boolean newArrivals,
+            @RequestParam(required = false) Boolean bestSellers,
+            @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int pageSize) {
-        ProductFilter filter = new ProductFilter(q, category, gender, minPrice, maxPrice, size, color, featured, sale, sort);
+        ProductFilter filter = new ProductFilter(q, category, gender, minPrice, maxPrice, size, color, featured, sale, sort,
+                newArrivals, bestSellers);
         return ResponseEntity.ok(productService.filterProducts(filter, page, pageSize));
     }
 

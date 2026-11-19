@@ -56,5 +56,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     long countByIsActiveTrue();
 
+    @Query("SELECT p.id FROM Product p WHERE p.isActive = true AND p.isFeatured = true ORDER BY p.createdAt DESC")
+    List<Long> findFeaturedIds();
+
     boolean existsBySlug(String slug);
 }

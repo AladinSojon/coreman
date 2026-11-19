@@ -128,6 +128,7 @@ img { max-width: 100%; display: block; }
 }
 .badge-accent { background: var(--accent); color: #fff; }
 .badge-ink { background: var(--ink); color: var(--on-ink); }
+.badge-new { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
 .badge-success { background: rgba(21, 128, 61, 0.1); color: var(--success); }
 
 /* ===== Loading ===== */

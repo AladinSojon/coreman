@@ -22,9 +22,25 @@ public final class ProductSpecifications {
      * @param categorySlugs the requested category plus all its descendants, or null for no category filter
      */
     public static Specification<Product> matching(ProductFilter f, Collection<String> categorySlugs) {
+        return matching(f, categorySlugs, null, null);
+    }
+
+    /**
+     * @param newCutoff products created after this are "new" unless newUntil says otherwise (used when f.newArrivals())
+     * @param onlyIds   restrict to these product ids (best sellers); null = no restriction
+     */
+    public static Specification<Product> matching(ProductFilter f, Collection<String> categorySlugs,
+                                                  java.time.LocalDateTime newCutoff, Collection<Long> onlyIds) {
         return (root, query, cb) -> {
             List<Predicate> p = new ArrayList<>();
             p.add(cb.isTrue(root.get("isActive")));
+            if (onlyIds != null) p.add(root.get("id").in(onlyIds));
+            if (Boolean.TRUE.equals(f.newArrivals()) && newCutoff != null) {
+                java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                p.add(cb.or(
+                        cb.and(cb.isNotNull(root.get("newUntil")), cb.greaterThan(root.get("newUntil"), now)),
+                        cb.and(cb.isNull(root.get("newUntil")), cb.greaterThanOrEqualTo(root.get("createdAt"), newCutoff))));
+            }
 
             if (has(f.q())) {
                 String like = "%" + f.q().trim().toLowerCase() + "%";

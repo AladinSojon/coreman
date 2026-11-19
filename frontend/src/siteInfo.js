@@ -4,7 +4,9 @@ export const siteInfo = {
   name: 'CoreMan',
   email: '',          // e.g. 'support@yourdomain.com'
   phone: '',          // e.g. '+880 1XXX-XXXXXX'
-  whatsapp: '',       // full number with country code, digits only, e.g. '8801XXXXXXXXX'
+  // WhatsApp number with country code, digits only, e.g. '8801XXXXXXXXX'.
+  // Set it here or with VITE_WHATSAPP_NUMBER in frontend/.env(.production); the floating WhatsApp button appears once it's set.
+  whatsapp: (import.meta.env.VITE_WHATSAPP_NUMBER || '8801611443733').replace(/\D/g, ''), // 01611-443733
   facebook: '',       // full page URL
   instagram: '',      // full profile URL
   address: '',        // showroom / office address

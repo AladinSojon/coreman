@@ -20,7 +20,9 @@ export default function ProductCard({ product }) {
         <img src={primaryImage} alt={product.name} loading="lazy" />
         {onSale
           ? <span className="badge badge-accent product-badge">−{discountPercent(product)}%</span>
-          : product.isFeatured && <span className="badge badge-ink product-badge">Best seller</span>}
+          : product.isNew
+            ? <span className="badge badge-new product-badge">New</span>
+            : product.isBestSeller && <span className="badge badge-ink product-badge">Best seller</span>}
         <button
           type="button"
           className={`product-wishlist ${saved ? 'saved' : ''}`}

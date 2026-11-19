@@ -56,9 +56,17 @@ public class Product {
     @Builder.Default
     private Boolean isActive = true;
 
+    /** Manual "featured on the home page" pick. Also tops up Best Sellers while sales data is thin. */
     @Column(name = "is_featured")
     @Builder.Default
     private Boolean isFeatured = false;
+
+    /**
+     * Optional override for New Arrivals. Null = automatic (new for N days after createdAt).
+     * A future date keeps it new until then; a past date ends "new" early.
+     */
+    @Column(name = "new_until")
+    private LocalDateTime newUntil;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

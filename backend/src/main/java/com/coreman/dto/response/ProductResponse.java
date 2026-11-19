@@ -14,6 +14,8 @@ public record ProductResponse(
         String brand,
         String gender,
         Boolean isFeatured,
+        boolean isNew,
+        boolean isBestSeller,
         String categoryName,
         String categorySlug,
         Double averageRating,

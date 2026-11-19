@@ -52,6 +52,11 @@ cors:
 # Inserts any missing standard categories on startup (never edits existing ones)
 coreman:
   seed-categories: ${SEED_CATEGORIES:true}
+  # Automatic collections
+  collections:
+    new-days: 30            # a product is a New Arrival for this many days after it's added (unless "new until" is set)
+    best-seller-days: 90    # Best Sellers = most units sold in this window, cancelled orders excluded
+    best-seller-min: 8      # if fewer products have sales, top up with Featured products
 
 # Logging
 logging:

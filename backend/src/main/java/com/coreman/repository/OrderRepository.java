@@ -45,6 +45,12 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     @EntityGraph(attributePaths = {"user", "shippingAddress"})
     List<Order> findTop6ByOrderByCreatedAtDesc();
 
+    /** [productId, unitsSold] for active products, best first, from non-cancelled orders since the date. */
+    @Query("SELECT v.product.id, SUM(oi.quantity) FROM OrderItem oi JOIN oi.variant v " +
+            "WHERE oi.order.status <> com.coreman.model.enums.OrderStatus.CANCELLED AND oi.order.createdAt >= :since " +
+            "AND v.product.isActive = true GROUP BY v.product.id ORDER BY SUM(oi.quantity) DESC")
+    List<Object[]> bestSellingProducts(@Param("since") LocalDateTime since, Pageable pageable);
+
     @EntityGraph(attributePaths = {"shippingAddress"})
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
 

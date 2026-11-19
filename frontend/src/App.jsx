@@ -7,6 +7,7 @@ import WishlistPage from './pages/WishlistPage';
 import InfoPage from './pages/InfoPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ScrollToTop from './components/ScrollToTop';
+import ChatWidget from './components/ChatWidget';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
             <Footer />
+            <ChatWidget />
           </WishlistProvider>
           </CartProvider>
         </AuthProvider>

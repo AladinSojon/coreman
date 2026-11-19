@@ -44,6 +44,16 @@
 .category-overlay h3 { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; }
 .category-overlay span { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 600; margin-top: 6px; }
 
+/* ===== Collection tabs ===== */
+.collection-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 20px; }
+.collection-tabs { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.collection-tabs button {
+  padding: 10px 16px; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  font-weight: 600; font-size: 0.95rem; color: var(--text-secondary); white-space: nowrap;
+}
+.collection-tabs button:hover { color: var(--text-primary); }
+.collection-tabs button.active { color: var(--text-primary); border-bottom-color: var(--ink); }
+
 /* ===== Sign-up band ===== */
 .cta-section { padding: 88px 0; background: var(--ink); color: var(--on-ink); margin-top: 40px; }
 .cta-section .section-title { color: var(--on-ink); }

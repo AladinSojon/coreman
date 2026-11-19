@@ -11,10 +11,13 @@ import com.coreman.model.Product;
 import com.coreman.model.ProductImage;
 import com.coreman.model.ProductVariant;
 import com.coreman.repository.CategoryRepository;
+import com.coreman.repository.OrderRepository;
 import com.coreman.repository.ProductRepository;
 import com.coreman.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -22,8 +25,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +42,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ReviewRepository reviewRepository;
+    private final OrderRepository orderRepository;
 
     public Page<ProductResponse> getProducts(Pageable pageable) {
         return productRepository.findByIsActiveTrue(pageable).map(this::mapToResponse);
@@ -58,17 +66,80 @@ public class ProductService {
             }
         }
 
-        Sort sort = switch (filter.sort() == null ? "newest" : filter.sort()) {
+        boolean best = Boolean.TRUE.equals(filter.bestSellers());
+        String sortKey = filter.sort() == null || filter.sort().isBlank() ? (best ? "popular" : "newest") : filter.sort();
+        int pageSize = Math.min(Math.max(size, 1), 48);
+        int pageIndex = Math.max(page, 0);
+        LocalDateTime newCutoff = LocalDateTime.now().minusDays(newDays);
+
+        List<Long> ranking = (best || "popular".equals(sortKey)) ? bestSellerRanking() : null;
+        if (best && ranking.isEmpty()) return Page.empty(PageRequest.of(pageIndex, pageSize));
+
+        var spec = ProductSpecifications.matching(filter, categorySlugs, newCutoff, best ? ranking : null);
+
+        if ("popular".equals(sortKey)) {
+            // Sales rank isn't a column, so rank in memory (the catalogue is small; best sellers are capped).
+            Map<Long, Integer> rank = new HashMap<>();
+            for (int i = 0; i < ranking.size(); i++) rank.put(ranking.get(i), i);
+            List<Product> all = new ArrayList<>(productRepository.findAll(spec, Sort.by("createdAt").descending()));
+            all.sort(Comparator.comparingInt(p -> rank.getOrDefault(p.getId(), Integer.MAX_VALUE)));
+            int from = Math.min(pageIndex * pageSize, all.size());
+            List<ProductResponse> content = all.subList(from, Math.min(from + pageSize, all.size())).stream()
+                    .map(this::mapToResponse).toList();
+            return new PageImpl<>(content, PageRequest.of(pageIndex, pageSize), all.size());
+        }
+
+        Sort sort = switch (sortKey) {
             case "price_asc" -> Sort.by("basePrice").ascending().and(Sort.by("id"));
             case "price_desc" -> Sort.by("basePrice").descending().and(Sort.by("id"));
             case "name" -> Sort.by("name").ascending();
             case "newest" -> Sort.by("createdAt").descending().and(Sort.by("id").descending());
             default -> throw new BadRequestException("Unknown sort: " + filter.sort());
         };
+        return productRepository.findAll(spec, PageRequest.of(pageIndex, pageSize, sort)).map(this::mapToResponse);
+    }
 
-        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 48), sort);
-        return productRepository.findAll(ProductSpecifications.matching(filter, categorySlugs), pageable)
-                .map(this::mapToResponse);
+    // ---------------------------------------------------------------- collections
+
+    @Value("${coreman.collections.new-days:30}")
+    private int newDays;
+
+    @Value("${coreman.collections.best-seller-days:90}")
+    private int bestSellerDays;
+
+    @Value("${coreman.collections.best-seller-min:8}")
+    private int bestSellerMin;
+
+    private static final int BEST_SELLER_MAX = 24;
+    private static final long RANKING_TTL_MS = 5 * 60 * 1000L;
+    private volatile List<Long> cachedRanking = List.of();
+    private volatile long cachedAt = 0;
+
+    /**
+     * Product ids in best-seller order: most units sold in the last N days (cancelled orders excluded),
+     * topped up with Featured products while there are fewer than the minimum. Cached for 5 minutes.
+     */
+    public List<Long> bestSellerRanking() {
+        if (System.currentTimeMillis() - cachedAt < RANKING_TTL_MS) return cachedRanking;
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        for (Object[] row : orderRepository.bestSellingProducts(LocalDateTime.now().minusDays(bestSellerDays), PageRequest.of(0, BEST_SELLER_MAX))) {
+            ids.add(((Number) row[0]).longValue());
+        }
+        if (ids.size() < bestSellerMin) {
+            for (Long id : productRepository.findFeaturedIds()) {
+                if (ids.size() >= bestSellerMin) break;
+                ids.add(id);
+            }
+        }
+        cachedRanking = List.copyOf(ids);
+        cachedAt = System.currentTimeMillis();
+        return cachedRanking;
+    }
+
+    public boolean isNew(Product p) {
+        LocalDateTime now = LocalDateTime.now();
+        if (p.getNewUntil() != null) return now.isBefore(p.getNewUntil());
+        return p.getCreatedAt() != null && p.getCreatedAt().isAfter(now.minusDays(newDays));
     }
 
     public ProductFacets getFacets() {
@@ -147,6 +218,8 @@ public class ProductService {
                 product.getBrand(),
                 product.getGender() != null ? product.getGender().name() : null,
                 product.getIsFeatured(),
+                isNew(product),
+                bestSellerRanking().contains(product.getId()),
                 product.getCategory() != null ? product.getCategory().getName() : null,
                 product.getCategory() != null ? product.getCategory().getSlug() : null,
                 avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : null,

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 /**
  * Optional filters for the public product listing. Every field may be null.
- * sort: newest (default) | price_asc | price_desc | name
+ * sort: newest (default) | price_asc | price_desc | name | popular (units sold)
  */
 public record ProductFilter(
         String q,
@@ -16,5 +16,13 @@ public record ProductFilter(
         String color,
         Boolean featured,
         Boolean sale,
-        String sort
-) {}
+        String sort,
+        Boolean newArrivals,
+        Boolean bestSellers
+) {
+    /** Backwards-compatible constructor for callers that don't use collections. */
+    public ProductFilter(String q, String category, String gender, BigDecimal minPrice, BigDecimal maxPrice,
+                         String size, String color, Boolean featured, Boolean sale, String sort) {
+        this(q, category, gender, minPrice, maxPrice, size, color, featured, sale, sort, null, null);
+    }
+}

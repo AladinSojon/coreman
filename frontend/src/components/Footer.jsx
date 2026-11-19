@@ -21,6 +21,8 @@ export default function Footer() {
             <h4>Shop</h4>
             <Link to="/shop?gender=MEN">Men</Link>
             <Link to="/shop?gender=WOMEN">Women</Link>
+            <Link to="/shop?newArrivals=true">New arrivals</Link>
+            <Link to="/shop?bestSellers=true">Best sellers</Link>
             <Link to="/shop?sale=true">Sale</Link>
             <Link to="/shop">All products</Link>
           </div>

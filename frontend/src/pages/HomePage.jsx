@@ -5,6 +5,55 @@ import api from '../api/client';
 import ProductCard from '../components/ProductCard';
 import './HomePage.css';
 
+const COLLECTIONS = [
+  { id: 'featured', label: 'Featured', sub: 'Handpicked by our team', link: '/shop?featured=true' },
+  { id: 'new', label: 'New Arrivals', sub: 'Just landed', link: '/shop?newArrivals=true', params: { newArrivals: true } },
+  { id: 'best', label: 'Best Sellers', sub: 'What everyone is buying', link: '/shop?bestSellers=true', params: { bestSellers: true } },
+  { id: 'sale', label: 'On Sale', sub: 'Limited-time prices', link: '/shop?sale=true', params: { sale: true } },
+];
+
+/** One section with a tab per collection; tabs with no products are hidden. */
+function CollectionTabs({ featured }) {
+  const [lists, setLists] = useState({ featured });
+  const [active, setActive] = useState(null);
+
+  useEffect(() => { setLists(l => ({ ...l, featured })); }, [featured]);
+  useEffect(() => {
+    COLLECTIONS.filter(c => c.params).forEach(c => {
+      api.get('/api/products', { params: { ...c.params, pageSize: 8 } })
+        .then(r => setLists(l => ({ ...l, [c.id]: r.data.content || [] })))
+        .catch(() => setLists(l => ({ ...l, [c.id]: [] })));
+    });
+  }, []);
+
+  const available = COLLECTIONS.filter(c => (lists[c.id] || []).length > 0);
+  if (available.length === 0) return null;
+  const current = available.find(c => c.id === active) || available[0];
+
+  return (
+    <section className="section">
+      <div className="container">
+        <div className="collection-head">
+          <div>
+            <h2 className="section-title">{current.label}</h2>
+            <p className="section-subtitle" style={{ marginBottom: 0 }}>{current.sub}</p>
+          </div>
+          <Link to={current.link} className="btn btn-secondary btn-sm">View all <ArrowRight size={16} /></Link>
+        </div>
+        <div className="collection-tabs" role="tablist" aria-label="Collections">
+          {available.map(c => (
+            <button key={c.id} role="tab" aria-selected={c.id === current.id} className={c.id === current.id ? 'active' : ''}
+              onClick={() => setActive(c.id)}>{c.label}</button>
+          ))}
+        </div>
+        <div className="product-grid">
+          {lists[current.id].slice(0, 8).map(p => <ProductCard key={p.id} product={p} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   const [featured, setFeatured] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -70,23 +119,8 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Featured Products */}
-      {featured.length > 0 && (
-        <section className="section">
-          <div className="container">
-            <div className="flex justify-between items-center mb-2">
-              <div>
-                <h2 className="section-title">Featured Products</h2>
-                <p className="section-subtitle" style={{ marginBottom: 0 }}>Handpicked favorites this season</p>
-              </div>
-              <Link to="/shop" className="btn btn-secondary btn-sm">View All <ArrowRight size={16} /></Link>
-            </div>
-            <div className="product-grid" style={{ marginTop: 32 }}>
-              {featured.slice(0, 8).map(p => <ProductCard key={p.id} product={p} />)}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Collections: Featured / New Arrivals / Best Sellers / Sale */}
+      <CollectionTabs featured={featured} />
 
       {/* CTA */}
       <section className="cta-section">

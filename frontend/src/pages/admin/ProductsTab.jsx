@@ -8,12 +8,13 @@ const LOW = 5;
 const blankVariant = () => ({ size: '', color: '', colorHex: '#000000', sku: '', stockQuantity: 0 });
 const blankForm = () => ({
   name: '', slug: '', description: '', basePrice: '', compareAtPrice: '', brand: 'CoreMan',
-  gender: 'MEN', categoryId: '', isActive: true, isFeatured: false, images: [], variants: [blankVariant()],
+  gender: 'MEN', categoryId: '', isActive: true, isFeatured: false, newUntil: '', images: [], variants: [blankVariant()],
 });
+const todayIso = () => new Date().toISOString().slice(0, 10);
 const autoSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 const STATUS_FILTERS = [
-  ['', 'All'], ['active', 'Active'], ['inactive', 'Hidden'], ['featured', 'Featured'],
+  ['', 'All'], ['active', 'Active'], ['inactive', 'Hidden'], ['new', 'New'], ['featured', 'Featured'],
   ['sale', 'On sale'], ['lowstock', 'Low stock'], ['outofstock', 'Out of stock'],
 ];
 
@@ -61,7 +62,13 @@ export default function ProductsTab({ params, setParams }) {
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState(blankForm());
 
-  useEffect(() => { api.get('/api/categories').then(r => setCategories(r.data || [])).catch(() => {}); }, []);
+  const [collections, setCollections] = useState({ newDays: 30, bestSellerIds: [] });
+  useEffect(() => {
+    api.get('/api/categories').then(r => setCategories(r.data || [])).catch(() => {});
+    api.get('/api/admin/products/collections').then(r => setCollections(r.data)).catch(() => {});
+  }, []);
+  const isNew = (p) => p.newUntil ? new Date(p.newUntil) > new Date()
+    : p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) < collections.newDays * 86400000;
 
   const load = useCallback(() => {
     setLoading(true);
@@ -93,7 +100,7 @@ export default function ProductsTab({ params, setParams }) {
     setForm({
       name: p.name, slug: p.slug, description: p.description || '', basePrice: p.basePrice, compareAtPrice: p.compareAtPrice ?? '',
       brand: p.brand || 'CoreMan', gender: p.gender || 'MEN', categoryId: p.category?.id || '',
-      isActive: p.isActive ?? true, isFeatured: p.isFeatured ?? false,
+      isActive: p.isActive ?? true, isFeatured: p.isFeatured ?? false, newUntil: p.newUntil ? String(p.newUntil).slice(0, 10) : '',
       images: p.images?.map(i => ({ imageUrl: i.imageUrl })) || [],
       variants: p.variants?.length ? p.variants.map(v => ({ size: v.size, color: v.color, colorHex: v.colorHex || '#000000', sku: v.sku || '', stockQuantity: v.stockQuantity })) : [blankVariant()],
     });
@@ -108,6 +115,7 @@ export default function ProductsTab({ params, setParams }) {
       categoryId: form.categoryId ? Number(form.categoryId) : null,
       basePrice: Number(form.basePrice),
       compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : null,
+      newUntil: form.newUntil || null,
       images: form.images.filter(i => i.imageUrl),
       variants: form.variants.filter(v => v.size && v.color),
     };
@@ -195,7 +203,26 @@ export default function ProductsTab({ params, setParams }) {
             <div className="form-group"><label>Brand</label><input value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })} /></div>
             <div className="form-group form-switches">
               <label className="checkbox-label"><Toggle checked={form.isActive} label="Active" onChange={v => setForm({ ...form, isActive: v })} /> Visible in shop</label>
-              <label className="checkbox-label"><Toggle checked={form.isFeatured} label="Featured" onChange={v => setForm({ ...form, isFeatured: v })} /> Featured / best seller</label>
+              <label className="checkbox-label"><Toggle checked={form.isFeatured} label="Featured" onChange={v => setForm({ ...form, isFeatured: v })} /> Featured on home page</label>
+            </div>
+            <div className="form-group"><label>New arrival until</label>
+              <div className="inline-field">
+                <input type="date" value={form.newUntil} onChange={e => setForm({ ...form, newUntil: e.target.value })} />
+                {form.newUntil
+                  ? <button type="button" className="btn-outline" onClick={() => setForm({ ...form, newUntil: '' })}>Automatic</button>
+                  : <button type="button" className="btn-outline" onClick={() => setForm({ ...form, newUntil: todayIso() })} title="Stop showing as New from tomorrow">End today</button>}
+              </div>
+              <small className="form-hint">
+                {form.newUntil
+                  ? (form.newUntil < todayIso() ? 'Not shown as New.' : `Shown as New until ${new Date(form.newUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.`)
+                  : `Automatic: shown as New for ${collections.newDays} days after it's added.`}
+              </small>
+            </div>
+            <div className="form-group"><label>Best seller</label>
+              <p className="form-hint" style={{ paddingTop: 8 }}>
+                Automatic — ranked by units sold in the last 90 days. Featured products fill the list while sales are low.
+                {editing && collections.bestSellerIds.includes(editing) && <strong style={{ color: 'var(--success)' }}> Currently a best seller.</strong>}
+              </p>
             </div>
             <div className="form-group full-width"><label>Description</label>
               <textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
@@ -251,7 +278,7 @@ export default function ProductsTab({ params, setParams }) {
 
       <div className="admin-table">
         <table>
-          <thead><tr><th /><th>Product</th><th className="r">Price</th><th>Category</th><th>Stock</th><th>Visible</th><th>Featured</th><th /></tr></thead>
+          <thead><tr><th /><th>Product</th><th className="r">Price</th><th>Category</th><th>Stock</th><th>Visible</th><th title="Featured on home page">Featured</th><th /></tr></thead>
           <tbody>
             {data.content.map(p => {
               const stock = p.variants?.reduce((s, v) => s + v.stockQuantity, 0) ?? 0;
@@ -261,7 +288,12 @@ export default function ProductsTab({ params, setParams }) {
                 <Fragment key={p.id}>
                   <tr className={!p.isActive ? 'row-muted' : ''}>
                     <td>{p.images?.[0] ? <img src={p.images[0].imageUrl} alt="" className="table-img" /> : <div className="table-img placeholder"><Package size={18} /></div>}</td>
-                    <td><strong>{p.name}</strong><small className="cell-sub">{p.slug}</small></td>
+                    <td>
+                      <strong>{p.name}</strong>
+                      {isNew(p) && <span className="tag tag-new">New</span>}
+                      {collections.bestSellerIds.includes(p.id) && <span className="tag tag-best">Best seller</span>}
+                      <small className="cell-sub">{p.slug}</small>
+                    </td>
                     <td className="r nowrap">{taka(p.basePrice)}{p.compareAtPrice > p.basePrice && <small className="cell-sub"><s>{taka(p.compareAtPrice)}</s> · −{Math.round((1 - p.basePrice / p.compareAtPrice) * 100)}%</small>}</td>
                     <td>{p.category?.name || <span className="muted">—</span>}</td>
                     <td>

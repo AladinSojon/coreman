@@ -82,6 +82,10 @@
 .pager .pager-info { margin-top: 0; }
 .pager-buttons { display: flex; gap: 6px; }
 
+.tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 0.68rem; font-weight: 700; vertical-align: 1px; }
+.tag-new { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.tag-best { background: var(--ink); color: var(--on-ink); }
+
 /* ===== Switch ===== */
 .switch { position: relative; width: 36px; height: 20px; border-radius: 999px; border: none; background: var(--border-hover); padding: 0; transition: background var(--transition); flex-shrink: 0; }
 .switch span { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform var(--transition); }

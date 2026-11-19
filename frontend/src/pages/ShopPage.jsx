@@ -7,13 +7,14 @@ import './ShopPage.css';
 
 const SORTS = [
   { value: 'newest', label: 'Newest' },
+  { value: 'popular', label: 'Best selling' },
   { value: 'price_asc', label: 'Price: low to high' },
   { value: 'price_desc', label: 'Price: high to low' },
   { value: 'name', label: 'Name A–Z' },
 ];
 
 // URL params the API understands. Everything lives in the URL so filtered pages can be shared.
-const FILTER_KEYS = ['q', 'category', 'gender', 'size', 'color', 'minPrice', 'maxPrice', 'featured', 'sale'];
+const FILTER_KEYS = ['q', 'category', 'gender', 'size', 'color', 'minPrice', 'maxPrice', 'featured', 'sale', 'newArrivals', 'bestSellers'];
 
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,7 +31,8 @@ export default function ShopPage() {
   const query = get('q');
   const category = get('category');
   const gender = get('gender');
-  const sort = get('sort') || 'newest';
+  // Best Sellers default to sales order; everything else to newest.
+  const sort = get('sort') || (get('bestSellers') ? 'popular' : 'newest');
   const page = Math.max(0, parseInt(get('page') || '0', 10) || 0);
 
   // Local copies so price inputs don't refetch on every keystroke.
@@ -90,19 +92,23 @@ export default function ShopPage() {
     get('size') && { key: 'size', label: `Size ${get('size')}` },
     get('color') && { key: 'color', label: get('color') },
     (get('minPrice') || get('maxPrice')) && { key: 'price', label: `৳${get('minPrice') || '0'} – ${get('maxPrice') ? '৳' + get('maxPrice') : 'any'}` },
+    get('newArrivals') && { key: 'newArrivals', label: 'New arrivals' },
+    get('bestSellers') && { key: 'bestSellers', label: 'Best sellers' },
     get('sale') && { key: 'sale', label: 'On sale' },
-    get('featured') && { key: 'featured', label: 'Best sellers' },
+    get('featured') && { key: 'featured', label: 'Featured' },
   ].filter(Boolean);
 
   const removeFilter = (key) => key === 'price' ? update({ minPrice: null, maxPrice: null }) : update({ [key]: null });
-  const clearAll = () => update({ gender: null, size: null, color: null, minPrice: null, maxPrice: null, sale: null, featured: null });
+  const clearAll = () => update({ gender: null, size: null, color: null, minPrice: null, maxPrice: null, sale: null, featured: null, newArrivals: null, bestSellers: null });
 
   const title = query
     ? `Search: "${query}"`
     : categoryInfo?.name
       || (category ? category.replace(/-/g, ' ')
+        : get('newArrivals') ? (gender === 'MEN' ? "Men's New Arrivals" : gender === 'WOMEN' ? "Women's New Arrivals" : 'New Arrivals')
+        : get('bestSellers') ? (gender === 'MEN' ? "Men's Best Sellers" : gender === 'WOMEN' ? "Women's Best Sellers" : 'Best Sellers')
         : get('sale') ? 'Sale'
-        : get('featured') ? 'Best Sellers'
+        : get('featured') ? 'Featured'
         : gender === 'MEN' ? "Men's Collection"
         : gender === 'WOMEN' ? "Women's Collection"
         : 'All Products');
@@ -123,7 +129,7 @@ export default function ShopPage() {
           </button>
           <label className="sort-select">
             <span>Sort</span>
-            <select value={sort} onChange={e => update({ sort: e.target.value === 'newest' ? null : e.target.value })}>
+            <select value={sort} onChange={e => update({ sort: e.target.value })}>
               {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </label>
@@ -205,10 +211,13 @@ export default function ShopPage() {
           <div className="filter-group">
             <h3>Collections</h3>
             <label className="check-row">
-              <input type="checkbox" checked={!!get('sale')} onChange={e => update({ sale: e.target.checked || null })} /> On sale
+              <input type="checkbox" checked={!!get('newArrivals')} onChange={e => update({ newArrivals: e.target.checked || null })} /> New arrivals
             </label>
             <label className="check-row">
-              <input type="checkbox" checked={!!get('featured')} onChange={e => update({ featured: e.target.checked || null })} /> Best sellers
+              <input type="checkbox" checked={!!get('bestSellers')} onChange={e => update({ bestSellers: e.target.checked || null })} /> Best sellers
+            </label>
+            <label className="check-row">
+              <input type="checkbox" checked={!!get('sale')} onChange={e => update({ sale: e.target.checked || null })} /> On sale
             </label>
           </div>
 
