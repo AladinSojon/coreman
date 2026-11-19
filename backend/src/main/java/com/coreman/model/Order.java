@@ -71,6 +71,10 @@ public class Order {
     @Builder.Default
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
+    /** Internal note for staff (never shown to the customer). */
+    @Column(name = "admin_note", columnDefinition = "TEXT")
+    private String adminNote;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();

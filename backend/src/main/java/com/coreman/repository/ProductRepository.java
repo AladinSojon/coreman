@@ -53,4 +53,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     Page<Product> findByCategorySlugs(@Param("slugs") List<String> slugs, Pageable pageable);
 
     List<Product> findByCategoryId(Long categoryId);
+
+    long countByIsActiveTrue();
+
+    boolean existsBySlug(String slug);
 }

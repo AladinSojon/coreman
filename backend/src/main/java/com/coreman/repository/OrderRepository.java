@@ -5,12 +5,48 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
+
+    // ---- Admin analytics (cancelled orders never count as sales) ----
+
+    @Query("SELECT COUNT(o), COALESCE(SUM(o.total), 0) FROM Order o " +
+            "WHERE o.status <> com.coreman.model.enums.OrderStatus.CANCELLED AND o.createdAt >= :from AND o.createdAt < :to")
+    List<Object[]> salesBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("SELECT COALESCE(SUM(o.total), 0) FROM Order o WHERE o.paymentStatus = com.coreman.model.enums.PaymentStatus.PAID")
+    BigDecimal collectedRevenue();
+
+    @Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")
+    List<Object[]> countByStatus();
+
+    @Query("SELECT o.createdAt, o.total FROM Order o " +
+            "WHERE o.status <> com.coreman.model.enums.OrderStatus.CANCELLED AND o.createdAt >= :from")
+    List<Object[]> salesSince(@Param("from") LocalDateTime from);
+
+    @Query("SELECT oi.productName, SUM(oi.quantity), SUM(oi.unitPrice * oi.quantity) FROM OrderItem oi " +
+            "WHERE oi.order.status <> com.coreman.model.enums.OrderStatus.CANCELLED " +
+            "GROUP BY oi.productName ORDER BY SUM(oi.quantity) DESC")
+    List<Object[]> topProducts(Pageable pageable);
+
+    @Query("SELECT o.user.id, COUNT(o), COALESCE(SUM(o.total), 0), MAX(o.createdAt) FROM Order o " +
+            "WHERE o.user.id IN :userIds AND o.status <> com.coreman.model.enums.OrderStatus.CANCELLED GROUP BY o.user.id")
+    List<Object[]> customerStats(@Param("userIds") Collection<Long> userIds);
+
+    @EntityGraph(attributePaths = {"user", "shippingAddress"})
+    List<Order> findTop6ByOrderByCreatedAtDesc();
+
+    @EntityGraph(attributePaths = {"shippingAddress"})
+    List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     Page<Order> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 

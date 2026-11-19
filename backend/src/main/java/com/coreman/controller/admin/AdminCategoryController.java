@@ -1,5 +1,6 @@
 package com.coreman.controller.admin;
 
+import com.coreman.exception.BadRequestException;
 import com.coreman.exception.ResourceNotFoundException;
 import com.coreman.model.Category;
 import com.coreman.model.Product;
@@ -58,6 +59,22 @@ public class AdminCategoryController {
         if (body.containsKey("description")) category.setDescription((String) body.get("description"));
         if (body.containsKey("imageUrl")) category.setImageUrl((String) body.get("imageUrl"));
         if (body.containsKey("displayOrder")) category.setDisplayOrder(((Number) body.get("displayOrder")).intValue());
+        if (body.containsKey("parentId")) {
+            Object raw = body.get("parentId");
+            if (raw == null || raw.toString().isBlank()) {
+                category.setParent(null);
+            } else {
+                Category parent = categoryRepository.findById(((Number) raw).longValue())
+                        .orElseThrow(() -> new ResourceNotFoundException("Parent category not found"));
+                // Refuse loops: a category can't sit under itself or one of its own descendants.
+                for (Category c = parent; c != null; c = c.getParent()) {
+                    if (c.getId().equals(category.getId())) {
+                        throw new BadRequestException("A category can't be moved under itself or one of its subcategories.");
+                    }
+                }
+                category.setParent(parent);
+            }
+        }
 
         log.info("[ADMIN] Category updated: {}", category.getName());
         return ResponseEntity.ok(categoryRepository.save(category));

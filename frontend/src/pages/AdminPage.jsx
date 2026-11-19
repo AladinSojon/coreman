@@ -1,590 +1,89 @@
 import { useEffect, useState } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
+import { BarChart2, ClipboardList, Package, FolderTree, Users, Star, Boxes } from 'lucide-react';
+import InventoryTab from './admin/InventoryTab';
 import { useAuth } from '../context/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { Users, Package, ShoppingCart, FolderTree, Plus, Edit2, Trash2, X, Save, ChevronRight, Image, Layers, BarChart2, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../api/client';
-import { uploadImage } from '../api/supabase';
+import DashboardTab from './admin/DashboardTab';
+import OrdersTab from './admin/OrdersTab';
+import ProductsTab from './admin/ProductsTab';
+import CategoriesTab from './admin/CategoriesTab';
+import CustomersTab from './admin/CustomersTab';
+import ReviewsTab from './admin/ReviewsTab';
 import './AdminPage.css';
 
-function CategoryManager() {
-  const [categories, setCategories] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({ name: '', slug: '', description: '', imageUrl: '', parentId: '', displayOrder: 0 });
-
-  useEffect(() => { loadCategories(); }, []);
-
-  const loadCategories = () => {
-    api.get('/api/admin/categories').then(r => setCategories(Array.isArray(r.data) ? r.data : [])).catch(() => {});
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const data = { ...form, parentId: form.parentId ? Number(form.parentId) : null };
-    try {
-      if (editing) {
-        await api.put(`/api/admin/categories/${editing}`, data);
-      } else {
-        await api.post('/api/admin/categories', data);
-      }
-      setShowForm(false); setEditing(null);
-      setForm({ name: '', slug: '', description: '', imageUrl: '', parentId: '', displayOrder: 0 });
-      loadCategories();
-    } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
-  };
-
-  const handleEdit = (cat) => {
-    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '', imageUrl: cat.imageUrl || '', parentId: cat.parent?.id || '', displayOrder: cat.displayOrder || 0 });
-    setEditing(cat.id); setShowForm(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this category?')) return;
-    await api.delete(`/api/admin/categories/${id}`);
-    loadCategories();
-  };
-
-  const autoSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-  // Flatten categories into a hierarchical list for the parent dropdown
-  const flattenCategories = (cats, depth = 0) => {
-    let result = [];
-    for (const cat of cats) {
-      result.push({ ...cat, depth, label: '\u00A0\u00A0'.repeat(depth) + (depth > 0 ? '└ ' : '') + cat.name });
-      if (cat.children?.length > 0) {
-        result = result.concat(flattenCategories(cat.children, depth + 1));
-      }
-    }
-    return result;
-  };
-
-  // Use the public categories API which returns a nested tree
-  const [treeCategories, setTreeCategories] = useState([]);
-  useEffect(() => {
-    api.get('/api/categories').then(r => setTreeCategories(Array.isArray(r.data) ? r.data : [])).catch(() => {});
-  }, [categories]);
-
-  const allCategoriesFlat = flattenCategories(treeCategories)
-    .filter(c => c.id !== editing); // exclude self to prevent circular reference
-
-  return (
-    <div className="admin-section">
-      <div className="section-header">
-        <h2><FolderTree size={20} /> Categories ({categories.length})</h2>
-        <button className="btn-primary btn-sm" onClick={() => { setShowForm(!showForm); setEditing(null); setForm({ name: '', slug: '', description: '', imageUrl: '', parentId: '', displayOrder: 0 }); }}>
-          {showForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> Add Category</>}
-        </button>
-      </div>
-
-      {showForm && (
-        <form className="admin-form card" onSubmit={handleSubmit}>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Name *</label>
-              <input value={form.name} onChange={e => { setForm({ ...form, name: e.target.value, slug: autoSlug(e.target.value) }); }} required />
-            </div>
-            <div className="form-group">
-              <label>Slug</label>
-              <input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Parent Category</label>
-              <select value={form.parentId} onChange={e => setForm({ ...form, parentId: e.target.value })}>
-                <option value="">None (Top Level)</option>
-                {allCategoriesFlat.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Display Order</label>
-              <input type="number" value={form.displayOrder} onChange={e => setForm({ ...form, displayOrder: Number(e.target.value) })} />
-            </div>
-            <div className="form-group full-width">
-              <label>Description</label>
-              <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} />
-            </div>
-            <div className="form-group full-width">
-              <label>Category Image</label>
-              {form.imageUrl ? (
-                <div className="image-grid">
-                  <div className="image-card">
-                    <img src={form.imageUrl} alt="" />
-                    <button type="button" className="remove-btn" onClick={() => setForm({ ...form, imageUrl: '' })}><X size={14} /></button>
-                  </div>
-                </div>
-              ) : (
-                <label className="file-upload-area" style={{padding: '20px'}}>
-                  <input type="file" accept="image/*" onChange={async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    setUploading(true);
-                    try {
-                      const url = await uploadImage(file);
-                      setForm(prev => ({ ...prev, imageUrl: url }));
-                    } catch (err) { alert('Upload failed: ' + err.message); }
-                    setUploading(false);
-                    e.target.value = '';
-                  }} hidden />
-                  <div className="upload-content">
-                    <Image size={24} />
-                    <p>{uploading ? 'Uploading...' : 'Click to upload image'}</p>
-                  </div>
-                </label>
-              )}
-            </div>
-          </div>
-          <button type="submit" className="btn-primary"><Save size={16} /> {editing ? 'Update' : 'Create'} Category</button>
-        </form>
-      )}
-
-      <div className="admin-table">
-        <table>
-          <thead><tr><th>Name</th><th>Slug</th><th>Parent</th><th>Order</th><th>Actions</th></tr></thead>
-          <tbody>
-            {categories.map(cat => (
-              <tr key={cat.id}>
-                <td><strong>{cat.name}</strong></td>
-                <td className="text-muted">{cat.slug}</td>
-                <td>{cat.parent?.name || '—'}</td>
-                <td>{cat.displayOrder}</td>
-                <td className="actions">
-                  <button className="btn-icon" onClick={() => handleEdit(cat)}><Edit2 size={16} /></button>
-                  <button className="btn-icon btn-danger" onClick={() => handleDelete(cat.id)}><Trash2 size={16} /></button>
-                </td>
-              </tr>
-            ))}
-            {categories.length === 0 && <tr><td colSpan={5} className="text-center text-muted">No categories yet</td></tr>}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function ProductManager() {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({
-    name: '', slug: '', description: '', basePrice: '', brand: 'CoreMan',
-    gender: 'MEN', categoryId: '', isActive: true, isFeatured: false,
-    images: [],
-    variants: [{ size: '', color: '', colorHex: '#000000', sku: '', stockQuantity: 0 }]
-  });
-
-  useEffect(() => {
-    loadProducts();
-    api.get('/api/admin/categories').then(r => setCategories(Array.isArray(r.data) ? r.data : [])).catch(() => {});
-  }, []);
-
-  const loadProducts = () => {
-    api.get('/api/admin/products?size=100').then(r => {
-      const data = r.data;
-      setProducts(Array.isArray(data) ? data : (data?.content || []));
-    }).catch(() => {});
-  };
-
-  const resetForm = () => ({
-    name: '', slug: '', description: '', basePrice: '', brand: 'CoreMan',
-    gender: 'MEN', categoryId: '', isActive: true, isFeatured: false,
-    images: [],
-    variants: [{ size: '', color: '', colorHex: '#000000', sku: '', stockQuantity: 0 }]
-  });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const data = {
-      ...form,
-      categoryId: form.categoryId ? Number(form.categoryId) : null,
-      basePrice: Number(form.basePrice),
-      compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : null,
-      images: form.images.filter(i => i.imageUrl),
-      variants: form.variants.filter(v => v.size && v.color)
-    };
-    try {
-      if (editing) {
-        await api.put(`/api/admin/products/${editing}`, data);
-      } else {
-        await api.post('/api/admin/products', data);
-      }
-      setShowForm(false); setEditing(null); setForm(resetForm());
-      loadProducts();
-    } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
-  };
-
-  const handleEdit = (product) => {
-    setForm({
-      name: product.name, slug: product.slug, description: product.description || '',
-      basePrice: product.basePrice, compareAtPrice: product.compareAtPrice ?? '', brand: product.brand || 'CoreMan',
-      gender: product.gender, categoryId: product.category?.id || '',
-      isActive: product.isActive ?? true, isFeatured: product.isFeatured ?? false,
-      images: product.images?.length ? product.images.map(i => ({ imageUrl: i.imageUrl })) : [{ imageUrl: '' }],
-      variants: product.variants?.length ? product.variants.map(v => ({
-        size: v.size, color: v.color, colorHex: v.colorHex || '#000000', sku: v.sku, stockQuantity: v.stockQuantity
-      })) : [{ size: '', color: '', colorHex: '#000000', sku: '', stockQuantity: 0 }]
-    });
-    setEditing(product.id); setShowForm(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this product?')) return;
-    await api.delete(`/api/admin/products/${id}`);
-    loadProducts();
-  };
-
-  const autoSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-  const removeImage = (i) => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) });
-
-  const handleFileUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-    setUploading(true);
-    try {
-      const urls = await Promise.all(files.map(f => uploadImage(f)));
-      setForm(prev => ({ ...prev, images: [...prev.images, ...urls.map(url => ({ imageUrl: url }))] }));
-    } catch (err) { alert('Upload failed: ' + err.message); }
-    setUploading(false);
-    e.target.value = '';
-  };
-
-  const addVariant = () => setForm({ ...form, variants: [...form.variants, { size: '', color: '', colorHex: '#000000', sku: '', stockQuantity: 0 }] });
-  const removeVariant = (i) => setForm({ ...form, variants: form.variants.filter((_, idx) => idx !== i) });
-  const updateVariant = (i, key, val) => { const vars = [...form.variants]; vars[i][key] = val; setForm({ ...form, variants: vars }); };
-
-  return (
-    <div className="admin-section">
-      <div className="section-header">
-        <h2><Package size={20} /> Products ({products.length})</h2>
-        <button className="btn-primary btn-sm" onClick={() => { setShowForm(!showForm); setEditing(null); setForm(resetForm()); }}>
-          {showForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> Add Product</>}
-        </button>
-      </div>
-
-      {showForm && (
-        <form className="admin-form card" onSubmit={handleSubmit}>
-          <h3>{editing ? 'Edit Product' : 'New Product'}</h3>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Product Name *</label>
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value, slug: autoSlug(e.target.value) })} required />
-            </div>
-            <div className="form-group">
-              <label>Slug</label>
-              <input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Price (BDT) *</label>
-              <input type="number" step="0.01" value={form.basePrice} onChange={e => setForm({ ...form, basePrice: e.target.value })} required />
-            </div>
-            <div className="form-group">
-              <label>Compare-at price (BDT)</label>
-              <input type="number" step="0.01" min="0" value={form.compareAtPrice ?? ''} placeholder="Leave empty if not on sale"
-                onChange={e => setForm({ ...form, compareAtPrice: e.target.value })} />
-              {form.compareAtPrice && Number(form.compareAtPrice) <= Number(form.basePrice) && (
-                <small style={{ color: 'var(--warning)' }}>Must be higher than the price to show as a sale.</small>
-              )}
-            </div>
-            <div className="form-group">
-              <label>Brand</label>
-              <input value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Category</label>
-              <select value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })}>
-                <option value="">Select category</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.parent ? `${c.parent.name} → ` : ''}{c.name}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Gender</label>
-              <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}>
-                <option value="MEN">Men</option>
-                <option value="WOMEN">Women</option>
-                <option value="UNISEX">Unisex</option>
-              </select>
-            </div>
-            <div className="form-group full-width">
-              <label>Description</label>
-              <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} />
-            </div>
-            <div className="form-group">
-              <label className="checkbox-label">
-                <input type="checkbox" checked={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.checked })} /> Active
-              </label>
-            </div>
-            <div className="form-group">
-              <label className="checkbox-label">
-                <input type="checkbox" checked={form.isFeatured} onChange={e => setForm({ ...form, isFeatured: e.target.checked })} /> Featured
-              </label>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <div className="section-header">
-              <h4><Image size={16} /> Images</h4>
-            </div>
-            <label className="file-upload-area">
-              <input type="file" accept="image/*" multiple onChange={handleFileUpload} hidden />
-              <div className="upload-content">
-                <Image size={32} />
-                <p>{uploading ? 'Uploading...' : 'Click to upload images'}</p>
-                <span className="text-muted">PNG, JPG, WebP (max 5MB each)</span>
-              </div>
-            </label>
-            {form.images.length > 0 && (
-              <div className="image-grid">
-                {form.images.map((img, i) => (
-                  <div key={i} className="image-card">
-                    <img src={img.imageUrl} alt="" />
-                    <button type="button" className="remove-btn" onClick={() => removeImage(i)}><X size={14} /></button>
-                    {i === 0 && <span className="primary-badge">Primary</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="form-section">
-            <div className="section-header">
-              <h4><Layers size={16} /> Variants (Size / Color / Stock)</h4>
-              <button type="button" className="btn-sm btn-outline" onClick={addVariant}><Plus size={14} /> Add Variant</button>
-            </div>
-            {form.variants.map((v, i) => (
-              <div key={i} className="variant-row">
-                <input placeholder="Size (S/M/L/XL)" value={v.size} onChange={e => updateVariant(i, 'size', e.target.value)} />
-                <input placeholder="Color name" value={v.color} onChange={e => updateVariant(i, 'color', e.target.value)} />
-                <input type="color" value={v.colorHex} onChange={e => updateVariant(i, 'colorHex', e.target.value)} className="color-input" />
-                <input placeholder="SKU" value={v.sku} onChange={e => updateVariant(i, 'sku', e.target.value)} />
-                <input type="number" placeholder="Stock" value={v.stockQuantity} onChange={e => updateVariant(i, 'stockQuantity', Number(e.target.value))} className="stock-input" />
-                {form.variants.length > 1 && <button type="button" className="btn-icon btn-danger" onClick={() => removeVariant(i)}><X size={14} /></button>}
-              </div>
-            ))}
-          </div>
-
-          <button type="submit" className="btn-primary"><Save size={16} /> {editing ? 'Update' : 'Create'} Product</button>
-        </form>
-      )}
-
-      <div className="admin-table">
-        <table>
-          <thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Category</th><th>Variants</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>
-            {products.map(p => (
-              <tr key={p.id}>
-                <td>{p.images?.[0] ? <img src={p.images[0].imageUrl} alt="" className="table-img" /> : '—'}</td>
-                <td><strong>{p.name}</strong>{p.isFeatured && <span className="badge">Featured</span>}</td>
-                <td>৳{p.basePrice}{p.compareAtPrice > p.basePrice && <s className="text-muted" style={{ marginLeft: 6, fontSize: '0.8rem' }}>৳{p.compareAtPrice}</s>}</td>
-                <td>{p.category?.name || '—'}</td>
-                <td>{p.variants?.length || 0}</td>
-                <td><span className={`status ${p.isActive ? 'active' : 'inactive'}`}>{p.isActive ? 'Active' : 'Inactive'}</span></td>
-                <td className="actions">
-                  <button className="btn-icon" onClick={() => handleEdit(p)}><Edit2 size={16} /></button>
-                  <button className="btn-icon btn-danger" onClick={() => handleDelete(p.id)}><Trash2 size={16} /></button>
-                </td>
-              </tr>
-            ))}
-            {products.length === 0 && <tr><td colSpan={7} className="text-center text-muted">No products yet. Click "Add Product" to create one.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-const STATUS_COLORS = {
-  PENDING: '#f59e0b',
-  CONFIRMED: '#3b82f6',
-  SHIPPED: '#8b5cf6',
-  DELIVERED: '#10b981',
-  CANCELLED: '#ef4444',
-};
-
-function OrderManager() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedOrder, setExpandedOrder] = useState(null);
-
-  useEffect(() => { loadOrders(); }, []);
-
-  const loadOrders = () => {
-    setLoading(true);
-    api.get('/api/admin/orders?size=50&sort=createdAt,desc')
-      .then(r => setOrders(r.data?.content || r.data || []))
-      .catch(() => setOrders([]))
-      .finally(() => setLoading(false));
-  };
-
-  const updateStatus = async (orderId, newStatus) => {
-    try {
-      await api.put(`/api/admin/orders/${orderId}/status`, { status: newStatus });
-      loadOrders();
-    } catch (err) { alert('Failed to update status: ' + (err.response?.data?.message || err.message)); }
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  return (
-    <div className="admin-section">
-      <div className="section-header">
-        <h2><ClipboardList size={20} /> Orders ({orders.length})</h2>
-        <button className="btn-primary btn-sm" onClick={loadOrders}>Refresh</button>
-      </div>
-
-      {loading ? (
-        <div className="text-center text-muted" style={{ padding: 40 }}>Loading orders...</div>
-      ) : orders.length === 0 ? (
-        <div className="text-center text-muted" style={{ padding: 40 }}>No orders yet</div>
-      ) : (
-        <div className="admin-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Order #</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map(order => (
-                <>
-                  <tr key={order.id} className={expandedOrder === order.id ? 'expanded-row' : ''} style={{ cursor: 'pointer' }} onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}>
-                    <td><strong>{order.orderNumber}</strong></td>
-                    <td>{order.user?.firstName} {order.user?.lastName}<br/><span className="text-muted" style={{ fontSize: '0.78rem' }}>{order.user?.email}</span></td>
-                    <td>{order.items?.length || 0}</td>
-                    <td><strong>৳{order.total}</strong></td>
-                    <td>
-                      <span className="order-status-badge" style={{ background: STATUS_COLORS[order.status] + '20', color: STATUS_COLORS[order.status], border: `1px solid ${STATUS_COLORS[order.status]}40` }}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`payment-badge ${order.paymentStatus?.toLowerCase()}`}>
-                        {order.paymentStatus || 'UNPAID'}
-                      </span>
-                    </td>
-                    <td className="text-muted" style={{ fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{formatDate(order.createdAt)}</td>
-                    <td onClick={e => e.stopPropagation()}>
-                      <select
-                        value={order.status}
-                        onChange={e => updateStatus(order.id, e.target.value)}
-                        className="status-select"
-                        style={{ borderColor: STATUS_COLORS[order.status] }}
-                      >
-                        <option value="PENDING">Pending</option>
-                        <option value="CONFIRMED">Confirmed</option>
-                        <option value="SHIPPED">Shipped</option>
-                        <option value="DELIVERED">Delivered</option>
-                        <option value="CANCELLED">Cancelled</option>
-                      </select>
-                    </td>
-                  </tr>
-                  {expandedOrder === order.id && (
-                    <tr key={`${order.id}-detail`} className="order-detail-row">
-                      <td colSpan={8}>
-                        <div className="order-detail-content">
-                          <div className="order-detail-items">
-                            <h4>Order Items</h4>
-                            {order.items?.map((item, i) => (
-                              <div key={i} className="order-detail-item">
-                                <span className="text-muted" style={{ minWidth: 24 }}>{item.quantity}×</span>
-                                <span style={{ flex: 1 }}>{item.productName || `Product #${item.productId}`}</span>
-                                <span>{item.size} / {item.color}</span>
-                                <strong>৳{item.totalPrice || item.unitPrice * item.quantity}</strong>
-                              </div>
-                            ))}
-                          </div>
-                          {order.shippingAddress && (
-                            <div className="order-detail-address">
-                              <h4>Shipping Address</h4>
-                              {order.shippingAddress.recipientName && <p><strong>{order.shippingAddress.recipientName}</strong></p>}
-                              {order.shippingAddress.phone && <p><a href={`tel:${order.shippingAddress.phone}`}>{order.shippingAddress.phone}</a></p>}
-                              <p>{order.shippingAddress.street}</p>
-                              <p>{order.shippingAddress.city}, {order.shippingAddress.zipCode}</p>
-                              <p>{order.shippingAddress.country}</p>
-                              <h4 style={{ marginTop: 16 }}>Payment</h4>
-                              <p>{order.paymentMethod === 'COD' || !order.paymentMethod ? 'Cash on Delivery' : order.paymentMethod} · {order.paymentStatus}</p>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
+const TABS = [
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart2 },
+  { id: 'orders', label: 'Orders', icon: ClipboardList },
+  { id: 'products', label: 'Products', icon: Package },
+  { id: 'inventory', label: 'Inventory', icon: Boxes },
+  { id: 'categories', label: 'Categories', icon: FolderTree },
+  { id: 'customers', label: 'Customers', icon: Users },
+  { id: 'reviews', label: 'Reviews', icon: Star },
+];
 
 export default function AdminPage() {
-  const { isAdmin, loading } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const { isAdmin, loading, user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [pending, setPending] = useState(null);
 
+  const tab = TABS.some(t => t.id === searchParams.get('tab')) ? searchParams.get('tab') : 'dashboard';
+  const params = Object.fromEntries([...searchParams.entries()].filter(([k]) => k !== 'tab'));
+
+  // Badge on the Orders tab: orders still waiting to be processed.
   useEffect(() => {
     if (!isAdmin) return;
-    api.get('/api/admin/dashboard').then(r => setStats(r.data)).catch(() => {});
-  }, [isAdmin]);
+    api.get('/api/admin/orders', { params: { status: 'PENDING', size: 1 } })
+      .then(r => setPending(r.data.totalElements)).catch(() => {});
+  }, [isAdmin, tab]);
 
   // Wait for the saved session to load before deciding; otherwise a page reload redirects admins away.
   if (loading) return null;
   if (!isAdmin) return <Navigate to="/" />;
 
+  /** Switch tab, replacing its filters. */
+  const go = (id, next = {}) => {
+    const sp = new URLSearchParams({ tab: id });
+    Object.entries(next).forEach(([k, v]) => v != null && v !== '' && sp.set(k, String(v)));
+    setSearchParams(sp);
+    window.scrollTo({ top: 0 });
+  };
+
+  /** Merge changes into the current tab's filters (null removes a key). */
+  const setParams = (changes) => {
+    const sp = new URLSearchParams(searchParams);
+    sp.set('tab', tab);
+    Object.entries(changes).forEach(([k, v]) => (v == null || v === '' ? sp.delete(k) : sp.set(k, String(v))));
+    setSearchParams(sp, { replace: true });
+  };
+
+  const props = { params, setParams, go };
+
   return (
     <div className="page container admin-page">
-      <h1 className="page-title">Admin Panel</h1>
-
-      <div className="admin-tabs">
-        <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>
-          <BarChart2 size={16} /> Dashboard
-        </button>
-        <button className={activeTab === 'orders' ? 'active' : ''} onClick={() => setActiveTab('orders')}>
-          <ClipboardList size={16} /> Orders
-        </button>
-        <button className={activeTab === 'categories' ? 'active' : ''} onClick={() => setActiveTab('categories')}>
-          <FolderTree size={16} /> Categories
-        </button>
-        <button className={activeTab === 'products' ? 'active' : ''} onClick={() => setActiveTab('products')}>
-          <Package size={16} /> Products
-        </button>
+      <div className="admin-head">
+        <div>
+          <h1 className="page-title">Admin</h1>
+          <p className="panel-sub">Signed in as {user?.firstName} · {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+        </div>
       </div>
 
-      {activeTab === 'dashboard' && (
-        <div className="admin-stats">
-          <div className="stat-card card">
-            <div className="stat-icon"><Users size={24} /></div>
-            <div><p className="stat-value">{stats?.totalUsers || 0}</p><p className="text-muted">Total Users</p></div>
-          </div>
-          <div className="stat-card card">
-            <div className="stat-icon"><Package size={24} /></div>
-            <div><p className="stat-value">{stats?.totalProducts || 0}</p><p className="text-muted">Products</p></div>
-          </div>
-          <div className="stat-card card">
-            <div className="stat-icon"><ShoppingCart size={24} /></div>
-            <div><p className="stat-value">{stats?.totalOrders || 0}</p><p className="text-muted">Orders</p></div>
-          </div>
-        </div>
-      )}
+      <nav className="admin-tabs" aria-label="Admin sections">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button key={id} className={tab === id ? 'active' : ''} aria-current={tab === id ? 'page' : undefined} onClick={() => go(id)}>
+            <Icon size={16} /> {label}
+            {id === 'orders' && pending > 0 && <span className="tab-badge" aria-label={`${pending} pending`}>{pending}</span>}
+          </button>
+        ))}
+      </nav>
 
-      {activeTab === 'orders' && <OrderManager />}
-      {activeTab === 'categories' && <CategoryManager />}
-      {activeTab === 'products' && <ProductManager />}
+      {tab === 'dashboard' && <DashboardTab {...props} />}
+      {tab === 'orders' && <OrdersTab key="orders" {...props} />}
+      {tab === 'products' && <ProductsTab key="products" {...props} />}
+      {tab === 'inventory' && <InventoryTab {...props} />}
+      {tab === 'categories' && <CategoriesTab {...props} />}
+      {tab === 'customers' && <CustomersTab key="customers" {...props} />}
+      {tab === 'reviews' && <ReviewsTab {...props} />}
     </div>
   );
 }
