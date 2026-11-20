@@ -35,6 +35,9 @@ App runs at `http://localhost:5173`
 | admin@coreman.com | admin123 | Admin |
 | demo@coreman.com | demo123 | Customer |
 
+## Deploying
+To run the shop on your own server (e.g. a Hostinger VPS with your domain), follow [deploy/README.md](deploy/README.md): one setup command installs everything, and `coreman-update` deploys new versions.
+
 ## Tech Stack
 
 | Layer | Technology |

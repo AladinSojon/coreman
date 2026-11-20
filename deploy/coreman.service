@@ -1,0 +1,22 @@
+[Unit]
+Description=CoreMan backend (Spring Boot)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+User=coreman
+Group=coreman
+WorkingDirectory=/opt/coreman
+EnvironmentFile=/etc/coreman/coreman.env
+ExecStart=/usr/bin/java -Xms256m -Xmx768m -XX:+UseSerialGC -jar /opt/coreman/app.jar
+SuccessExitStatus=143
+Restart=always
+RestartSec=5
+# Basic hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
