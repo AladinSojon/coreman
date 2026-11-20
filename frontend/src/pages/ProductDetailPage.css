@@ -4,8 +4,9 @@
 .pdp-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 64px; padding-bottom: 80px; }
 .pdp-main-image { aspect-ratio: 3/4; border-radius: var(--radius); overflow: hidden; background: var(--bg-secondary); }
 .pdp-main-image img { width: 100%; height: 100%; object-fit: cover; }
-.pdp-thumbs { display: flex; gap: 12px; margin-top: 12px; }
-.pdp-thumb { width: 72px; height: 96px; border-radius: var(--radius-sm); overflow: hidden; border: 2px solid transparent; cursor: pointer; padding: 0; background: none; }
+.pdp-gallery, .pdp-info { min-width: 0; } /* let many thumbnails scroll instead of widening the column */
+.pdp-thumbs { display: flex; gap: 12px; margin-top: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.pdp-thumb { flex: 0 0 auto; width: 72px; height: 96px; border-radius: var(--radius-sm); overflow: hidden; border: 2px solid transparent; cursor: pointer; padding: 0; background: none; }
 .pdp-thumb.active { border-color: var(--accent); }
 .pdp-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
