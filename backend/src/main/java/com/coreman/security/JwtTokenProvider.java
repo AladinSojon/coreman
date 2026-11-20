@@ -45,6 +45,7 @@ public class JwtTokenProvider {
                 .claim("role", principal.getRole().name())
                 .claim("type", type)
                 .issuedAt(now)
+                .claim("iatMs", now.getTime()) // exact issue time, so a password reset can sign out sessions from the same second
                 .expiration(expiryDate)
                 .signWith(key)
                 .compact();
@@ -53,6 +54,15 @@ public class JwtTokenProvider {
     public Long getUserIdFromToken(String token) {
         Claims claims = parseToken(token);
         return Long.parseLong(claims.getSubject());
+    }
+
+    /** True if the token was issued before {@code when} (e.g. before a password change). */
+    public boolean issuedBefore(String token, java.time.Instant when) {
+        Claims claims = parseToken(token);
+        Number ms = claims.get("iatMs", Number.class);
+        if (ms != null) return ms.longValue() < when.toEpochMilli();
+        java.util.Date iat = claims.getIssuedAt(); // tokens from before this change: second precision
+        return iat == null || iat.toInstant().isBefore(when.truncatedTo(java.time.temporal.ChronoUnit.SECONDS));
     }
 
     public String getTokenType(String token) {

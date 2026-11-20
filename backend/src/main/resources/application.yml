@@ -26,6 +26,20 @@ spring:
       fail-on-empty-beans: false
     default-property-inclusion: non_null
 
+  # Email (password reset). Leave MAIL_HOST empty to turn email off; any SMTP works,
+  # e.g. Gmail: MAIL_HOST=smtp.gmail.com, MAIL_USERNAME=you@gmail.com, MAIL_PASSWORD=<app password>.
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 10000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
+
   servlet:
     multipart:
       max-file-size: 10MB
@@ -62,6 +76,10 @@ coreman:
       store-id: ${SSLCOMMERZ_STORE_ID:}
       store-password: ${SSLCOMMERZ_STORE_PASSWORD:}
       sandbox: ${SSLCOMMERZ_SANDBOX:true}   # set to false with your LIVE store credentials
+  # Sender shown on emails, e.g. "CoreMan <you@gmail.com>" (defaults to MAIL_USERNAME)
+  mail-from: ${MAIL_FROM:}
+  # Photos uploaded in Admin are stored here and served at /api/uploads/...
+  upload-dir: ${UPLOAD_DIR:${user.home}/.coreman/uploads}
   # Automatic collections
   collections:
     new-days: 30            # a product is a New Arrival for this many days after it's added (unless "new until" is set)

@@ -37,22 +37,6 @@ if (-not $cf) {
 }
 if (-not $cf) { throw 'cloudflared not found. Install it with: winget install Cloudflare.cloudflared' }
 
-Write-Host '==> Starting the backend'
-$backend = Start-Process $java -ArgumentList '-Xms256m', '-Xmx768m', '-jar', "`"$jar`"" -WindowStyle Hidden -PassThru `
-    -RedirectStandardOutput "$logs\backend.log" -RedirectStandardError "$logs\backend-error.log"
-$up = $false
-foreach ($i in 1..60) {
-    Start-Sleep 2
-    try { Invoke-WebRequest 'http://127.0.0.1:8080/api/products/filters' -UseBasicParsing -TimeoutSec 3 | Out-Null; $up = $true; break } catch { }
-    if ($backend.HasExited) { break }
-}
-if (-not $up) { throw "Backend didn't start. See $logs\backend.log" }
-
-Write-Host '==> Starting the shop (port 4173)'
-$shop = Start-Process 'npx.cmd' -ArgumentList 'vite', 'preview', '--port', '4173', '--strictPort' -WorkingDirectory "$repo\frontend" `
-    -WindowStyle Hidden -PassThru -RedirectStandardOutput "$logs\shop.log" -RedirectStandardError "$logs\shop-error.log"
-Start-Sleep 3
-
 Write-Host '==> Opening the Cloudflare Tunnel'
 if ($env:TUNNEL_TOKEN) {
     $tunnel = Start-Process $cf -ArgumentList 'tunnel', '--no-autoupdate', 'run', '--token', $env:TUNNEL_TOKEN -WindowStyle Hidden -PassThru `
@@ -68,6 +52,26 @@ if ($env:TUNNEL_TOKEN) {
         if ($m) { $url = $m.Matches[0].Value; break }
     }
 }
+
+# A quick tunnel's address changes on every start: hand it to the backend for links it builds
+# (password-reset emails, payment returns). A named tunnel uses FRONTEND_URL from host.env.
+if ($url -and -not $env:TUNNEL_TOKEN) { $env:FRONTEND_URL = $url; $env:BACKEND_URL = $url }
+
+Write-Host '==> Starting the backend'
+$backend = Start-Process $java -ArgumentList '-Xms256m', '-Xmx768m', '-jar', "`"$jar`"" -WindowStyle Hidden -PassThru `
+    -RedirectStandardOutput "$logs\backend.log" -RedirectStandardError "$logs\backend-error.log"
+$up = $false
+foreach ($i in 1..60) {
+    Start-Sleep 2
+    try { Invoke-WebRequest 'http://127.0.0.1:8080/api/products/filters' -UseBasicParsing -TimeoutSec 3 | Out-Null; $up = $true; break } catch { }
+    if ($backend.HasExited) { break }
+}
+if (-not $up) { throw "Backend didn't start. See $logs\backend.log" }
+
+Write-Host '==> Starting the shop (port 4173)'
+$shop = Start-Process 'npx.cmd' -ArgumentList 'vite', 'preview', '--port', '4173', '--strictPort' -WorkingDirectory "$repo\frontend" `
+    -WindowStyle Hidden -PassThru -RedirectStandardOutput "$logs\shop.log" -RedirectStandardError "$logs\shop-error.log"
+Start-Sleep 3
 
 "$($backend.Id) $($shop.Id) $($tunnel.Id)" | Set-Content $pidFile
 if ($url) { $url | Set-Content (Join-Path $home_ 'public-url.txt') }

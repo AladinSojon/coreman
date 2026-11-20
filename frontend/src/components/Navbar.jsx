@@ -4,7 +4,29 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useState, useEffect, useRef } from 'react';
 import api from '../api/client';
+import { useLiveCampaigns, useCountdown, shortLeft } from '../utils/campaigns';
 import './Navbar.css';
+
+/** Top strip: the live sale (with time left) when there is one, otherwise the usual free-shipping note. */
+function AnnounceBar() {
+  const campaign = useLiveCampaigns()[0];
+  const left = useCountdown(campaign?.endsAt);
+  if (!campaign || left.done) {
+    return (
+      <div className="announce-bar">
+        Free shipping on orders over ৳2,000
+        <Link to="/shop">Shop now</Link>
+      </div>
+    );
+  }
+  return (
+    <div className="announce-bar announce-sale">
+      {campaign.announcement || `${campaign.name}: up to ${campaign.discountPercent}% off`}
+      {campaign.showCountdown && <span className="announce-left"> · ends in {shortLeft(left)}</span>}
+      <Link to={`/sale/${campaign.slug}`}>Shop the sale</Link>
+    </div>
+  );
+}
 
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth();
@@ -94,10 +116,7 @@ export default function Navbar() {
 
   return (
     <>
-    <div className="announce-bar">
-      Free shipping on orders over ৳2,000
-      <Link to="/shop">Shop now</Link>
-    </div>
+    <AnnounceBar />
     <nav className="navbar">
       <div className="container navbar-inner">
         <button className="nav-mobile-toggle" onClick={() => setMenuOpen(!menuOpen)}>

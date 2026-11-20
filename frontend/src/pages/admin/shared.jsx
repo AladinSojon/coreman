@@ -7,6 +7,7 @@ export const PAYMENT_STATUSES = ['UNPAID', 'PAID', 'REFUNDED'];
 export const STATUS_LABEL = {
   PENDING: 'Pending', CONFIRMED: 'Confirmed', SHIPPED: 'Shipped', DELIVERED: 'Delivered', CANCELLED: 'Cancelled',
   UNPAID: 'Unpaid', PAID: 'Paid', REFUNDED: 'Refunded',
+  LIVE: 'Live', SCHEDULED: 'Scheduled', ENDED: 'Ended', OFF: 'Off',
 };
 
 /** ৳1,234 — whole Taka unless there are paisa. */

@@ -26,6 +26,7 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductVariantRepository variantRepository;
     private final UserRepository userRepository;
+    private final CampaignService campaignService;
 
     @Transactional(readOnly = true)
     public CartResponse getCart(Long userId) {
@@ -150,7 +151,7 @@ public class CartService {
     private CartResponse.CartItemResponse mapCartItem(CartItem item) {
         ProductVariant variant = item.getVariant();
         Product product = variant.getProduct();
-        BigDecimal unitPrice = variant.getEffectivePrice();
+        BigDecimal unitPrice = campaignService.unitPrice(variant);
         BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
 
         String imageUrl = variant.getImageUrl();

@@ -41,7 +41,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Spring forwards errors (e.g. a 403) to /error; it must be public or every error becomes a 401.
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh",
+                                "/api/auth/forgot-password", "/api/auth/reset-password", "/api/auth/reset-password/check").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/campaigns/**", "/api/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/*/reviews").permitAll()
                         .requestMatchers("/api/payments/webhook").permitAll()

@@ -29,6 +29,7 @@ public class AdminCustomerController {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final AddressRepository addressRepository;
+    private final com.coreman.service.PasswordResetService passwordResetService;
 
     public record CustomerRow(Long id, String name, String email, String phone, String role,
                               LocalDateTime joinedAt, long orders, BigDecimal totalSpent, LocalDateTime lastOrderAt) {}
@@ -76,6 +77,12 @@ public class AdminCustomerController {
                 .toList();
         return ResponseEntity.ok(new CustomerDetail(row(u, s.isEmpty() ? null : s.get(0)), orders,
                 addressRepository.findByUserIdOrderByIsDefaultDesc(id)));
+    }
+
+    /** One-time reset link secret (24 h) for the admin to send the customer, e.g. on WhatsApp. */
+    @PostMapping("/{id}/reset-link")
+    public ResponseEntity<Map<String, Object>> resetLink(@PathVariable Long id) {
+        return ResponseEntity.ok(Map.of("token", passwordResetService.createForAdmin(id), "expiresInHours", 24));
     }
 
     private static CustomerRow row(User u, Object[] s) {

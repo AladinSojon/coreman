@@ -7,7 +7,19 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import ProductReviews from '../components/ProductReviews';
 import { formatPrice, sortSizes } from '../utils/price';
+import { useCountdown, shortLeft } from '../utils/campaigns';
 import './ProductDetailPage.css';
+
+/** "Black Friday Sale · ends in 2d 4h" above the price while a campaign sets it. */
+function SaleStrip({ product }) {
+  const left = useCountdown(product.saleEndsAt);
+  if (!product.saleName || left.done) return null;
+  return (
+    <Link to={`/sale/${product.saleSlug}`} className="pdp-sale-strip">
+      <strong>{product.saleName}</strong> · ends in <span className="tabular">{shortLeft(left)}</span>
+    </Link>
+  );
+}
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
@@ -114,6 +126,7 @@ export default function ProductDetailPage() {
             ) : <span>No reviews yet</span>}
           </a>
 
+          <SaleStrip product={product} />
           <p className="pdp-price">
             <span className={wasPrice ? 'price-sale' : ''}>{formatPrice(price)}</span>
             {wasPrice && (

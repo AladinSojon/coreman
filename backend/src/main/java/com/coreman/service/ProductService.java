@@ -43,6 +43,8 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ReviewRepository reviewRepository;
     private final OrderRepository orderRepository;
+    private final CampaignService campaignService;
+    private final com.coreman.repository.CampaignRepository campaignRepository;
 
     public Page<ProductResponse> getProducts(Pageable pageable) {
         return productRepository.findByIsActiveTrue(pageable).map(this::mapToResponse);
@@ -75,7 +77,22 @@ public class ProductService {
         List<Long> ranking = (best || "popular".equals(sortKey)) ? bestSellerRanking() : null;
         if (best && ranking.isEmpty()) return Page.empty(PageRequest.of(pageIndex, pageSize));
 
-        var spec = ProductSpecifications.matching(filter, categorySlugs, newCutoff, best ? ranking : null);
+        java.util.Collection<Long> onlyIds = best ? ranking : null;
+        if (filter.campaign() != null && !filter.campaign().isBlank()) {
+            var campaign = campaignRepository.findBySlug(filter.campaign().trim())
+                    .orElseThrow(() -> new ResourceNotFoundException("Sale not found: " + filter.campaign()));
+            CampaignService.SaleSet inSale = campaignService.productsOf(campaign);
+            if (inSale.isEmpty()) return Page.empty(PageRequest.of(pageIndex, pageSize));
+            if (!inSale.all()) {
+                java.util.Set<Long> ids = new java.util.HashSet<>(inSale.productIds());
+                if (onlyIds != null) ids.retainAll(onlyIds);
+                if (ids.isEmpty()) return Page.empty(PageRequest.of(pageIndex, pageSize));
+                onlyIds = ids;
+            }
+        }
+        CampaignService.SaleSet saleSet = Boolean.TRUE.equals(filter.sale()) ? campaignService.saleSet() : new CampaignService.SaleSet(false, java.util.Set.of());
+
+        var spec = ProductSpecifications.matching(filter, categorySlugs, newCutoff, onlyIds, saleSet.all(), saleSet.productIds());
 
         if ("popular".equals(sortKey)) {
             // Sales rank isn't a column, so rank in memory (the catalogue is small; best sellers are capped).
@@ -208,13 +225,16 @@ public class ProductService {
                 .map(this::mapImage)
                 .toList();
 
+        CampaignService.Price price = campaignService.priceFor(product, product.getBasePrice());
+        var sale = price.campaign();
+
         return new ProductResponse(
                 product.getId(),
                 product.getName(),
                 product.getSlug(),
                 product.getDescription(),
-                product.getBasePrice(),
-                product.getCompareAtPrice(),
+                price.price(),
+                price.was(),
                 product.getBrand(),
                 product.getGender() != null ? product.getGender().name() : null,
                 product.getIsFeatured(),
@@ -226,14 +246,17 @@ public class ProductService {
                 reviewCount,
                 product.getCreatedAt(),
                 variants,
-                images
+                images,
+                sale != null ? sale.getName() : null,
+                sale != null ? sale.getSlug() : null,
+                sale != null ? sale.getEndsAt() : null
         );
     }
 
     private ProductResponse.VariantResponse mapVariant(ProductVariant v) {
         return new ProductResponse.VariantResponse(
                 v.getId(), v.getSize(), v.getColor(), v.getColorHex(),
-                v.getSku(), v.getEffectivePrice(), v.getStockQuantity(), v.getImageUrl()
+                v.getSku(), campaignService.unitPrice(v), v.getStockQuantity(), v.getImageUrl()
         );
     }
 

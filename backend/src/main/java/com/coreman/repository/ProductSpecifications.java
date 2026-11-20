@@ -31,6 +31,16 @@ public final class ProductSpecifications {
      */
     public static Specification<Product> matching(ProductFilter f, Collection<String> categorySlugs,
                                                   java.time.LocalDateTime newCutoff, Collection<Long> onlyIds) {
+        return matching(f, categorySlugs, newCutoff, onlyIds, false, null);
+    }
+
+    /**
+     * @param saleAll  a live campaign covers the whole shop, so "on sale" means every product
+     * @param saleIds  products covered by live campaigns (on sale besides those with a "was" price)
+     */
+    public static Specification<Product> matching(ProductFilter f, Collection<String> categorySlugs,
+                                                  java.time.LocalDateTime newCutoff, Collection<Long> onlyIds,
+                                                  boolean saleAll, Collection<Long> saleIds) {
         return (root, query, cb) -> {
             List<Predicate> p = new ArrayList<>();
             p.add(cb.isTrue(root.get("isActive")));
@@ -62,9 +72,10 @@ public final class ProductSpecifications {
             if (f.minPrice() != null) p.add(cb.greaterThanOrEqualTo(root.get("basePrice"), f.minPrice()));
             if (f.maxPrice() != null) p.add(cb.lessThanOrEqualTo(root.get("basePrice"), f.maxPrice()));
             if (Boolean.TRUE.equals(f.featured())) p.add(cb.isTrue(root.get("isFeatured")));
-            if (Boolean.TRUE.equals(f.sale())) {
-                p.add(cb.isNotNull(root.get("compareAtPrice")));
-                p.add(cb.greaterThan(root.get("compareAtPrice"), root.<java.math.BigDecimal>get("basePrice")));
+            if (Boolean.TRUE.equals(f.sale()) && !saleAll) {
+                Predicate marked = cb.and(cb.isNotNull(root.get("compareAtPrice")),
+                        cb.greaterThan(root.get("compareAtPrice"), root.<java.math.BigDecimal>get("basePrice")));
+                p.add(saleIds == null || saleIds.isEmpty() ? marked : cb.or(marked, root.get("id").in(saleIds)));
             }
 
             // Size / colour: product must have an in-stock variant matching both (if given).

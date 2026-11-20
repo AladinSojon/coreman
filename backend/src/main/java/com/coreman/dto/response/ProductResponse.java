@@ -22,7 +22,10 @@ public record ProductResponse(
         Long reviewCount,
         LocalDateTime createdAt,
         List<VariantResponse> variants,
-        List<ImageResponse> images
+        List<ImageResponse> images,
+        String saleName,          // live campaign setting this price (null if none)
+        String saleSlug,
+        java.time.Instant saleEndsAt
 ) {
     public record VariantResponse(
             Long id,

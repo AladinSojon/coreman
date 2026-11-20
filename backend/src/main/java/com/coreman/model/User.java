@@ -46,6 +46,10 @@ public class User {
     private String avatarUrl;
 
     /** Created by guest checkout (no password the customer knows; can't sign in). */
+    /** Set when the password is reset; sessions started before this are signed out. */
+    @Column(name = "password_changed_at")
+    private java.time.Instant passwordChangedAt;
+
     @Column(name = "is_guest")
     @Builder.Default
     private Boolean guest = false;

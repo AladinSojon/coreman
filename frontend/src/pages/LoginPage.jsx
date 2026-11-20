@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './AuthPage.css';
 
@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const notice = useLocation().state?.notice;
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(''); setLoading(true);
@@ -22,6 +23,7 @@ export default function LoginPage() {
       <div className="auth-card">
         <h1>Welcome Back</h1>
         <p className="text-muted">Sign in to your CoreMan account</p>
+        {notice && <div className="auth-notice" role="status">{notice}</div>}
         {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="input-group">
@@ -29,7 +31,7 @@ export default function LoginPage() {
             <input className="input" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
           </div>
           <div className="input-group">
-            <label>Password</label>
+            <div className="auth-label-row"><label>Password</label><Link to="/forgot-password" className="auth-forgot">Forgot password?</Link></div>
             <input className="input" type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
           </div>
           <button className="btn btn-primary" style={{ width: '100%', marginTop: 8 }} disabled={loading}>

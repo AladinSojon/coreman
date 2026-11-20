@@ -75,4 +75,9 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             "AND oi.order.status = com.coreman.model.enums.OrderStatus.DELIVERED " +
             "AND oi.variant.product.id = :productId")
     boolean hasDeliveredPurchase(@Param("userId") Long userId, @Param("productId") Long productId);
+
+    /** Per campaign: [campaignId, orders, units, revenue] from lines it priced, cancelled orders excluded. */
+    @Query("SELECT oi.campaignId, COUNT(DISTINCT o.id), SUM(oi.quantity), SUM(oi.unitPrice * oi.quantity) FROM OrderItem oi JOIN oi.order o " +
+            "WHERE oi.campaignId IS NOT NULL AND o.status <> com.coreman.model.enums.OrderStatus.CANCELLED GROUP BY oi.campaignId")
+    List<Object[]> campaignStats();
 }

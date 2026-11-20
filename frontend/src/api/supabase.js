@@ -1,29 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import api from './client';
 
-// Set these per environment (frontend/.env.production for the live site, frontend/.env.local for your machine).
-// Leaving them out locally keeps test uploads from landing in the live storage bucket.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
-
+// Admin photo uploads go to the shop's own server (stored on disk, served from /api/uploads/...).
+// The file name is kept for existing imports; Supabase is no longer used.
 export async function uploadImage(file) {
-  if (!supabase) {
-    throw new Error('Image uploads are not configured here. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see frontend/.env).');
-  }
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-  const filePath = `products/${fileName}`;
-
-  const { error } = await supabase.storage
-    .from('product-images')
-    .upload(filePath, file, { contentType: file.type, upsert: false });
-
-  if (error) throw error;
-
-  const { data } = supabase.storage
-    .from('product-images')
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
+  if (file.size > 10 * 1024 * 1024) throw new Error('That image is over 10 MB. Please use a smaller one.');
+  const body = new FormData();
+  body.append('file', file);
+  // Override the client's JSON default; axios then lets the browser set the multipart boundary.
+  const { data } = await api.post('/api/admin/uploads', body, { headers: { 'Content-Type': 'multipart/form-data' } });
+  return data.url;
 }

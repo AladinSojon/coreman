@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Shield, RotateCcw } from 'lucide-react';
 import api from '../api/client';
 import ProductCard from '../components/ProductCard';
+import CampaignBanner from '../components/CampaignBanner';
+import { useLiveCampaigns } from '../utils/campaigns';
 import './HomePage.css';
 
 const COLLECTIONS = [
@@ -55,6 +57,7 @@ function CollectionTabs({ featured }) {
 }
 
 export default function HomePage() {
+  const liveSale = useLiveCampaigns()[0];
   const [featured, setFeatured] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -65,6 +68,7 @@ export default function HomePage() {
 
   return (
     <div className="home">
+      {liveSale && <CampaignBanner campaign={liveSale} />}
       {/* Hero */}
       <section className="hero">
         <div className="container hero-inner">

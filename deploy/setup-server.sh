@@ -49,7 +49,8 @@ fi
 
 step "Creating the app user and folders"
 id coreman >/dev/null 2>&1 || useradd --system --home "$APP_DIR" --shell /usr/sbin/nologin coreman
-mkdir -p "$APP_DIR" "$WEB_DIR" /etc/coreman "$BACKUP_DIR"
+mkdir -p "$APP_DIR" "$WEB_DIR" /etc/coreman "$BACKUP_DIR" /var/lib/coreman/uploads
+chown -R coreman:coreman /var/lib/coreman
 
 step "Setting up PostgreSQL"
 if [[ ! -f "$ENV_FILE" ]]; then
@@ -80,6 +81,18 @@ SERVER_ADDRESS=127.0.0.1
 FRONTEND_URL=https://$DOMAIN
 BACKEND_URL=https://$DOMAIN
 CORS_ORIGINS=https://$DOMAIN,https://www.$DOMAIN
+
+# Photos uploaded in Admin (backed up nightly with the database)
+UPLOAD_DIR=/var/lib/coreman/uploads
+
+# Email for password reset links. Leave MAIL_HOST empty to turn email off
+# (customers then ask you on WhatsApp and you make a link in Admin -> Customers).
+# Gmail: MAIL_HOST=smtp.gmail.com, MAIL_USERNAME=you@gmail.com, MAIL_PASSWORD=<16-letter app password>
+MAIL_HOST=
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_FROM=
 
 # Online payments (SSLCommerz). Leave empty to offer Cash on Delivery only.
 # Live: set your live Store ID/Password and SSLCOMMERZ_SANDBOX=false.

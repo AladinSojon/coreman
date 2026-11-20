@@ -69,6 +69,9 @@ public class AuthService {
         Long userId = tokenProvider.getUserIdFromToken(refreshToken);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (user.getPasswordChangedAt() != null && tokenProvider.issuedBefore(refreshToken, user.getPasswordChangedAt())) {
+            throw new BadRequestException("Your password was changed. Please sign in again.");
+        }
 
         return buildAuthResponse(user);
     }

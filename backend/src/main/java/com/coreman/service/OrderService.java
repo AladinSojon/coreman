@@ -35,6 +35,7 @@ public class OrderService {
     private final ProductVariantRepository variantRepository;
     private final AddressRepository addressRepository;
     private final SslCommerzService sslCommerz;
+    private final CampaignService campaignService;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     /** One line of an order before it is saved. */
@@ -151,13 +152,16 @@ public class OrderService {
     /** Shared by account and guest checkout: checks stock, prices from the database, decrements stock. */
     private Order createOrder(User user, Address shippingAddress, List<Line> lines, PaymentMethod requestedMethod) {
         BigDecimal subtotal = BigDecimal.ZERO;
+        // Price each line once, so the total and the line prices agree even if a sale starts or ends mid-checkout.
+        java.util.Map<Line, CampaignService.Price> prices = new java.util.IdentityHashMap<>();
         for (Line line : lines) {
             ProductVariant variant = line.variant();
+            prices.put(line, campaignService.priceFor(variant));
             if (variant.getStockQuantity() < line.quantity()) {
                 throw new BadRequestException("Insufficient stock for: " + variant.getProduct().getName()
                         + " (" + variant.getSize() + "/" + variant.getColor() + ")");
             }
-            subtotal = subtotal.add(variant.getEffectivePrice().multiply(BigDecimal.valueOf(line.quantity())));
+            subtotal = subtotal.add(prices.get(line).price().multiply(BigDecimal.valueOf(line.quantity())));
         }
 
         BigDecimal shippingCost = subtotal.compareTo(new BigDecimal("2000")) >= 0
@@ -189,6 +193,7 @@ public class OrderService {
         for (Line line : lines) {
             ProductVariant variant = line.variant();
             Product product = variant.getProduct();
+            CampaignService.Price price = prices.get(line);
             order.getItems().add(OrderItem.builder()
                     .order(order)
                     .variant(variant)
@@ -196,7 +201,8 @@ public class OrderService {
                     .size(variant.getSize())
                     .color(variant.getColor())
                     .quantity(line.quantity())
-                    .unitPrice(variant.getEffectivePrice())
+                    .unitPrice(price.price())
+                    .campaignId(price.campaign() != null ? price.campaign().getId() : null)
                     .build());
             variant.setStockQuantity(variant.getStockQuantity() - line.quantity());
             variantRepository.save(variant);

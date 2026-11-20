@@ -60,4 +60,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     List<Long> findFeaturedIds();
 
     boolean existsBySlug(String slug);
+
+    @Query("SELECT p.id FROM Product p WHERE p.category.id IN :categoryIds")
+    List<Long> findIdsByCategoryIds(@Param("categoryIds") java.util.Collection<Long> categoryIds);
 }

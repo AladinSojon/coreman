@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
-import { BarChart2, ClipboardList, Package, FolderTree, Users, Star, Boxes } from 'lucide-react';
+import { BarChart2, ClipboardList, Package, FolderTree, Users, Star, Boxes, Megaphone } from 'lucide-react';
+import CampaignsTab from './admin/CampaignsTab';
 import InventoryTab from './admin/InventoryTab';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'products', label: 'Products', icon: Package },
   { id: 'inventory', label: 'Inventory', icon: Boxes },
   { id: 'categories', label: 'Categories', icon: FolderTree },
+  { id: 'campaigns', label: 'Campaigns', icon: Megaphone },
   { id: 'customers', label: 'Customers', icon: Users },
   { id: 'reviews', label: 'Reviews', icon: Star },
 ];
@@ -82,6 +84,7 @@ export default function AdminPage() {
       {tab === 'products' && <ProductsTab key="products" {...props} />}
       {tab === 'inventory' && <InventoryTab {...props} />}
       {tab === 'categories' && <CategoriesTab {...props} />}
+      {tab === 'campaigns' && <CampaignsTab {...props} />}
       {tab === 'customers' && <CustomersTab key="customers" {...props} />}
       {tab === 'reviews' && <ReviewsTab {...props} />}
     </div>

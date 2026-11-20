@@ -42,6 +42,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Long userId = tokenProvider.getUserIdFromToken(token);
             User user = userRepository.findById(userId).orElse(null);
 
+            // A password reset signs out every device: tokens issued before it no longer work.
+            if (user != null && user.getPasswordChangedAt() != null && tokenProvider.issuedBefore(token, user.getPasswordChangedAt())) {
+                user = null;
+            }
             if (user != null) {
                 UserPrincipal principal = new UserPrincipal(user);
                 UsernamePasswordAuthenticationToken authToken =

@@ -18,11 +18,12 @@ public record ProductFilter(
         Boolean sale,
         String sort,
         Boolean newArrivals,
-        Boolean bestSellers
+        Boolean bestSellers,
+        String campaign          // campaign slug: only products in that live sale
 ) {
     /** Backwards-compatible constructor for callers that don't use collections. */
     public ProductFilter(String q, String category, String gender, BigDecimal minPrice, BigDecimal maxPrice,
                          String size, String color, Boolean featured, Boolean sale, String sort) {
-        this(q, category, gender, minPrice, maxPrice, size, color, featured, sale, sort, null, null);
+        this(q, category, gender, minPrice, maxPrice, size, color, featured, sale, sort, null, null, null);
     }
 }

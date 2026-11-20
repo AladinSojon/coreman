@@ -15,6 +15,12 @@
 .pdp-rating { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 16px; }
 .pdp-rating span { color: var(--text-secondary); font-size: 0.9rem; margin-left: 6px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-hover); }
 .pdp-rating:hover span { color: var(--text-primary); }
+.pdp-sale-strip {
+  display: flex; width: fit-content; align-items: center; gap: 6px; margin: 4px 0 12px; padding: 6px 12px;
+  border-radius: 999px; background: var(--accent-subtle); color: var(--accent); font-size: 0.85rem; font-weight: 500;
+}
+.pdp-sale-strip:hover { background: rgba(194, 65, 12, 0.14); }
+.pdp-sale-strip .tabular { font-variant-numeric: tabular-nums; }
 .pdp-price { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 20px; }
 .pdp-was { font-size: 1.15rem; font-weight: 500; color: var(--text-muted); }
 .pdp-wishlist.saved { color: var(--accent); border-color: var(--accent); }

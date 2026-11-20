@@ -1,0 +1,45 @@
+/* Sale banner — home page and the top of /sale/:slug */
+.campaign-banner {
+  --cb-bg: #17150f; --cb-fg: #ffffff; --cb-muted: rgba(255, 255, 255, 0.72); --cb-accent: #fb923c; --cb-box: rgba(255, 255, 255, 0.1);
+  position: relative; overflow: hidden; background: var(--cb-bg); color: var(--cb-fg);
+  padding: 48px 0;
+}
+.cb-red   { --cb-bg: #9f1d1d; --cb-accent: #fde68a; --cb-box: rgba(0, 0, 0, 0.2); }
+.cb-gold  { --cb-bg: #f5d27a; --cb-fg: #17150f; --cb-muted: rgba(23, 21, 15, 0.72); --cb-accent: #9a3412; --cb-box: rgba(23, 21, 15, 0.08); }
+.cb-green { --cb-bg: #1f3d2b; --cb-accent: #fcd34d; }
+
+.cb-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.campaign-banner.has-image::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--cb-bg) 0%, color-mix(in srgb, var(--cb-bg) 80%, transparent) 45%, color-mix(in srgb, var(--cb-bg) 20%, transparent) 100%);
+}
+.cb-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 40px; }
+.cb-text { max-width: 620px; }
+.cb-eyebrow { display: inline-block; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cb-accent); margin-bottom: 12px; }
+.cb-title { font-family: var(--font-display); font-size: clamp(1.9rem, 4.4vw, 3.2rem); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; margin: 0 0 12px; color: inherit; }
+.cb-sub { color: var(--cb-muted); font-size: 1.02rem; line-height: 1.55; margin: 0 0 24px; }
+.cb-cta {
+  display: inline-flex; align-items: center; gap: 8px; background: var(--cb-fg); color: var(--cb-bg);
+  padding: 13px 22px; border-radius: var(--radius); font-weight: 700; font-size: 0.95rem;
+  transition: transform var(--transition), opacity var(--transition);
+}
+.cb-cta:hover { transform: translateY(-1px); opacity: 0.92; }
+
+.cb-side { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; flex-shrink: 0; }
+.cb-discount { display: flex; align-items: baseline; gap: 8px; color: var(--cb-accent); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.08em; }
+.cb-discount strong { font-family: var(--font-display); font-size: clamp(3rem, 7vw, 5rem); line-height: 1; letter-spacing: -0.04em; }
+
+.cb-countdown { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.cb-countdown-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cb-muted); }
+.cb-countdown-boxes { display: flex; gap: 8px; }
+.cb-box { display: flex; flex-direction: column; align-items: center; min-width: 56px; padding: 8px 6px; border-radius: var(--radius); background: var(--cb-box); }
+.cb-box strong { font-family: var(--font-display); font-size: 1.5rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.cb-box small { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cb-muted); }
+
+@media (max-width: 768px) {
+  .campaign-banner { padding: 32px 0; }
+  .cb-inner { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .cb-side, .cb-countdown { align-items: flex-start; }
+  .cb-box { min-width: 48px; }
+  .campaign-banner.has-image::after { background: color-mix(in srgb, var(--cb-bg) 78%, transparent); }
+}

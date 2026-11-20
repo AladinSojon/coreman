@@ -1,7 +1,50 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, X, Mail, Phone } from 'lucide-react';
+import { Search, X, Mail, Phone, KeyRound, Copy } from 'lucide-react';
 import api from '../../api/client';
 import { Pill, Pagination, EmptyRow, taka, dateOnly, dateTime, relative, useDebounced, useToast } from './shared';
+
+/** Admin makes a one-time reset link to send the customer (e.g. on WhatsApp), valid 24 h. */
+function ResetLink({ customer }) {
+  const [link, setLink] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const make = async () => {
+    if (link && !window.confirm('Make a new link? The previous one stops working.')) return;
+    setBusy(true); setMsg('');
+    try {
+      const r = await api.post(`/api/admin/customers/${customer.id}/reset-link`);
+      setLink(`${window.location.origin}/reset-password?token=${encodeURIComponent(r.data.token)}`);
+    } catch (e) { setMsg(e.response?.data?.message || 'Could not make a link.'); }
+    setBusy(false);
+  };
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(link); setMsg('Copied'); } catch { window.prompt('Copy the link:', link); }
+  };
+  const phone = (customer.phone || '').replace(/\D/g, '').replace(/^0/, '880');
+  const wa = phone && `https://wa.me/${phone}?text=${encodeURIComponent(`Hi ${customer.name.split(' ')[0]}, here is your link to set a new CoreMan password (works once, for 24 hours): ${link}`)}`;
+  return (
+    <section className="drawer-section">
+      <h4><KeyRound size={14} /> Password</h4>
+      {!link ? (
+        <>
+          <p className="muted">Customer forgot their password? Make a one-time link (valid 24 hours) and send it to them. Their other sessions are signed out once they use it.</p>
+          <button className="btn-outline" onClick={make} disabled={busy}>{busy ? 'Making…' : 'Make reset link'}</button>
+        </>
+      ) : (
+        <>
+          <input readOnly value={link} onFocus={e => e.target.select()} aria-label="Reset link" style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 4, fontSize: '0.8rem' }} />
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <button className="btn-outline" onClick={copy}><Copy size={14} /> Copy</button>
+            {wa && <a className="btn-outline" href={wa} target="_blank" rel="noreferrer">Send on WhatsApp</a>}
+            <button className="btn-outline" onClick={make} disabled={busy}>New link</button>
+          </div>
+          <small className="muted">Only send it to the customer — anyone with this link can set the password.</small>
+        </>
+      )}
+      {msg && <small className={msg === 'Copied' ? 'form-hint ok' : 'form-hint warn'}>{msg}</small>}
+    </section>
+  );
+}
 
 function CustomerDrawer({ id, onClose, go }) {
   const [d, setD] = useState(null);
@@ -29,6 +72,7 @@ function CustomerDrawer({ id, onClose, go }) {
                 <p key={p}><a className="phone-link" href={`tel:${p}`}><Phone size={14} /> {p}</a></p>
               ))}
             </section>
+            {c.role !== 'GUEST' && <ResetLink customer={c} />}
             <section className="drawer-section">
               <h4>Orders</h4>
               {d.orders.length === 0 ? <p className="muted">No orders yet.</p> : d.orders.map(o => (

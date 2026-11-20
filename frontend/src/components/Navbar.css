@@ -5,6 +5,9 @@
 }
 .announce-bar a { text-decoration: underline; text-underline-offset: 3px; margin-left: 6px; }
 .announce-bar a:hover { color: #fdba74; }
+.announce-sale { background: var(--accent); }
+.announce-sale a:hover { color: #fde68a; }
+.announce-left { font-variant-numeric: tabular-nums; opacity: 0.9; }
 
 .navbar {
   position: sticky; top: 0; z-index: 100;

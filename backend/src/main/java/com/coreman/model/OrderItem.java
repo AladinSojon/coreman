@@ -39,4 +39,8 @@ public class OrderItem {
 
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
+
+    /** Campaign that set the price (for campaign results); null for normal-price lines. */
+    @Column(name = "campaign_id")
+    private Long campaignId;
 }
