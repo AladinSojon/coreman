@@ -71,6 +71,19 @@ public class Order {
     @Builder.Default
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
+    /** Online payments: the gateway's validation id, bank transaction id, channel (e.g. BKASH-BKash, VISA-Dutch Bangla) and time paid. */
+    @Column(name = "payment_val_id")
+    private String paymentValId;
+
+    @Column(name = "payment_gateway_ref")
+    private String paymentGatewayRef;
+
+    @Column(name = "payment_channel")
+    private String paymentChannel;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     /** Internal note for staff (never shown to the customer). */
     @Column(name = "admin_note", columnDefinition = "TEXT")
     private String adminNote;

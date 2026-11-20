@@ -32,13 +32,14 @@ function printInvoice(o) {
   <div class="muted">${esc(STATUS_LABEL[o.status] || o.status)}</div></div></div>
   <div class="box"><div><h3>Ship to</h3><strong>${esc(a.recipientName || `${o.user?.firstName || ''} ${o.user?.lastName || ''}`)}</strong><br>
   ${esc(a.phone || '')}<br>${esc(a.street || '')}<br>${esc(a.city || '')} ${esc(a.zipCode || '')}<br>${esc(a.country || '')}</div>
-  <div><h3>Customer</h3>${esc(o.user?.email || '')}<br><h3 style="margin-top:12px">Payment</h3>${o.paymentMethod === 'COD' || !o.paymentMethod ? 'Cash on Delivery' : esc(o.paymentMethod)} · ${esc(STATUS_LABEL[o.paymentStatus] || o.paymentStatus)}</div></div>
+  <div><h3>Customer</h3>${esc(o.user?.email || '')}<br><h3 style="margin-top:12px">Payment</h3>${o.paymentMethod === 'SSLCOMMERZ' ? 'Online (SSLCommerz)' + (o.paymentChannel ? ' — ' + esc(o.paymentChannel) : '') : 'Cash on Delivery'} ·${esc(STATUS_LABEL[o.paymentStatus] || o.paymentStatus)}</div></div>
   <table><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Total</th></tr></thead><tbody>${rows}</tbody></table>
   <table style="width:280px;margin-left:auto;margin-top:8px">
     <tr class="tot"><td>Subtotal</td><td class="r">${taka(o.subtotal)}</td></tr>
     <tr class="tot"><td>Shipping</td><td class="r">${Number(o.shippingCost) === 0 ? 'Free' : taka(o.shippingCost)}</td></tr>
     <tr class="grand"><td>Total</td><td class="r">${taka(o.total)}</td></tr></table>
-  ${o.paymentStatus === 'UNPAID' ? `<div class="cod">Collect ${taka(o.total)} on delivery</div>` : ''}
+  ${o.paymentStatus === 'UNPAID' && o.paymentMethod !== 'SSLCOMMERZ' ? `<div class="cod">Collect ${taka(o.total)} on delivery</div>` : ''}
+  ${o.paymentStatus === 'PAID' ? `<div class="cod">PAID — do not collect cash</div>` : ''}
   <p class="muted" style="margin-top:32px;text-align:center">Thank you for shopping with CoreMan.</p>
   <script>window.onload=()=>window.print()</script></body></html>`;
   const w = window.open('', '_blank', 'width=820,height=900');
@@ -102,7 +103,15 @@ function OrderDrawer({ order, onClose, onChanged, toast }) {
               <div><span>Subtotal</span><span>{taka(order.subtotal)}</span></div>
               <div><span>Shipping</span><span>{Number(order.shippingCost) === 0 ? 'Free' : taka(order.shippingCost)}</span></div>
               <div className="grand"><span>Total</span><span>{taka(order.total)}</span></div>
-              <div className="muted"><span>Payment</span><span>{order.paymentMethod === 'COD' || !order.paymentMethod ? 'Cash on Delivery' : order.paymentMethod}</span></div>
+              <div className="muted"><span>Payment</span><span>{order.paymentMethod === 'SSLCOMMERZ' ? 'Online (SSLCommerz)' : 'Cash on Delivery'}</span></div>
+              {order.paymentMethod === 'SSLCOMMERZ' && (
+                <>
+                  {order.paymentChannel && <div className="muted"><span>Paid with</span><span>{order.paymentChannel}</span></div>}
+                  {order.paymentGatewayRef && <div className="muted"><span>Bank txn</span><span>{order.paymentGatewayRef}</span></div>}
+                  {order.paymentIntentId && <div className="muted"><span>Gateway txn</span><span>{order.paymentIntentId}</span></div>}
+                  {order.paidAt && <div className="muted"><span>Paid at</span><span>{dateTime(order.paidAt)}</span></div>}
+                </>
+              )}
             </div>
           </section>
 

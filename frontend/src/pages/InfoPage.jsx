@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { siteInfo as s } from '../siteInfo';
 import NotFoundPage from './NotFoundPage';
+import { useOnlinePayments } from '../utils/paymentOptions';
 import './InfoPage.css';
 
 const money = (n) => `৳${n.toLocaleString('en-US')}`;
@@ -36,13 +37,13 @@ const PAGES = {
   about: {
     title: 'About CoreMan',
     lead: 'Premium everyday clothing, made to be worn hard and washed often.',
-    body: () => (
+    body: ({ online }) => (
       <>
         <p>CoreMan started with a simple idea: the pieces you reach for every day deserve the most care. We focus on heavyweight cotton, considered fits and colours that work together, so building a wardrobe is easy.</p>
         <h2>What we make</h2>
         <p>Our first collection is built around the drop-shoulder tee — boxy, relaxed and cut from dense cotton that holds its shape. We're growing the range one category at a time, and only add a piece when we're happy with the fabric and the fit.</p>
         <h2>How we sell</h2>
-        <p>We sell online across Bangladesh, with prices in Taka, Cash on Delivery on every order and free shipping on orders over {money(s.freeShippingThreshold)}.</p>
+        <p>We sell online across Bangladesh, with prices in Taka, {online ? 'online payment (bKash, Nagad, cards) or Cash on Delivery' : 'Cash on Delivery on every order'} and free shipping on orders over {money(s.freeShippingThreshold)}.</p>
         <p><Link to="/shop" className="btn btn-primary">Shop the collection</Link></p>
       </>
     ),
@@ -50,7 +51,7 @@ const PAGES = {
   contact: { title: 'Contact us', body: ContactDetails },
   shipping: {
     title: 'Shipping & delivery',
-    body: () => (
+    body: ({ online }) => (
       <>
         <h2>Shipping charges</h2>
         <table className="info-table">
@@ -61,10 +62,10 @@ const PAGES = {
         </table>
         <h2>How delivery works</h2>
         <ol>
-          <li>Place your order and choose Cash on Delivery.</li>
+          <li>Place your order and choose {online ? 'to pay online or by Cash on Delivery' : 'Cash on Delivery'}.</li>
           <li>We confirm the order — usually by phone — and pack it.</li>
           <li>Your parcel is handed to our courier partner and the order status changes to <strong>Shipped</strong>.</li>
-          <li>Pay the courier in cash when the parcel arrives.</li>
+          <li>{online ? 'If you chose Cash on Delivery, pay the courier when the parcel arrives.' : 'Pay the courier in cash when the parcel arrives.'}</li>
         </ol>
         <p>Delivery time depends on your location. You can follow every order from <Link to="/orders">My Orders</Link>.</p>
         <h2>Need to change your address?</h2>
@@ -74,7 +75,7 @@ const PAGES = {
   },
   returns: {
     title: 'Returns & exchanges',
-    body: () => (
+    body: ({ online }) => (
       <>
         <p>Not the right fit? You can return or exchange unworn items within {s.returnDays} days of delivery.</p>
         <h2>Conditions</h2>
@@ -95,7 +96,7 @@ const PAGES = {
   },
   privacy: {
     title: 'Privacy policy',
-    body: () => (
+    body: ({ online }) => (
       <>
         <p>This policy explains what information {s.name} collects and how it's used.</p>
         <h2>What we collect</h2>
@@ -105,7 +106,7 @@ const PAGES = {
           <li><strong>Order history</strong> — what you bought and when.</li>
           <li><strong>Wishlist and reviews</strong> — items you save and reviews you choose to publish. Reviews show your first name and last initial.</li>
         </ul>
-        <p>We don't collect or store card details: orders are paid by Cash on Delivery.</p>
+        <p>{online ? "Online payments are processed by SSLCommerz on its own secure page; we never see or store your card, bKash or bank details. We keep only the payment reference." : "We don't collect or store card details: orders are paid by Cash on Delivery."}</p>
         <h2>How we use it</h2>
         <ul>
           <li>To process, deliver and support your orders.</li>
@@ -120,7 +121,7 @@ const PAGES = {
   },
   terms: {
     title: 'Terms of service',
-    body: () => (
+    body: ({ online }) => (
       <>
         <p>By using this website and placing an order you agree to these terms.</p>
         <h2>Orders</h2>
@@ -130,7 +131,11 @@ const PAGES = {
           <li>Product colours may look slightly different on screen.</li>
         </ul>
         <h2>Payment</h2>
-        <p>Orders are paid in cash to the courier on delivery. Please have the exact amount shown on your order ready.</p>
+        {online ? (
+          <p>You can pay online through SSLCommerz (bKash, Nagad, Rocket, cards, internet banking) or in cash to the courier on delivery. Online orders that aren't paid within an hour are cancelled. Paid orders are cancelled and refunded on request through our support team.</p>
+        ) : (
+          <p>Orders are paid in cash to the courier on delivery. Please have the exact amount shown on your order ready.</p>
+        )}
         <h2>Shipping and returns</h2>
         <p>See our <Link to="/pages/shipping">Shipping</Link> and <Link to="/pages/returns">Returns</Link> pages.</p>
         <h2>Your account</h2>
@@ -146,13 +151,14 @@ export default function InfoPage() {
   const { slug } = useParams();
   const page = PAGES[slug];
   if (!page) return <NotFoundPage />;
+  const online = useOnlinePayments();
   const Body = page.body;
 
   return (
     <div className="page container info-page">
       <h1 className="page-title">{page.title}</h1>
       {page.lead && <p className="info-lead">{page.lead}</p>}
-      <div className="info-body"><Body /></div>
+      <div className="info-body"><Body online={online} /></div>
     </div>
   );
 }

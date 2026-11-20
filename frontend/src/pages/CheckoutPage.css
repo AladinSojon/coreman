@@ -5,8 +5,12 @@
 .step-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--on-ink); font-size: 0.8rem; }
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-.pay-option { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); }
+.pay-options { display: flex; flex-direction: column; gap: 10px; }
+.pay-option { width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); text-align: left; color: var(--text-primary); font: inherit; cursor: pointer; }
+.pay-option:hover { border-color: var(--border-hover); }
 .pay-option.selected { border: 2px solid var(--ink); padding: 15px; }
+.pay-brands { display: block; margin-top: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: var(--text-muted); }
+.checkout-note svg { vertical-align: -1px; }
 .pay-option p { font-size: 0.85rem; color: var(--text-secondary); }
 .pay-check { margin-left: auto; color: var(--ink); }
 

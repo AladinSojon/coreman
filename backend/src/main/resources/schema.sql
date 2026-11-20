@@ -5,3 +5,9 @@ ALTER TABLE IF EXISTS categories ALTER COLUMN image_url TYPE TEXT;
 -- Drop unique constraint on SKU (allows empty/null SKUs)
 ALTER TABLE IF EXISTS product_variants DROP CONSTRAINT IF EXISTS ukq935p2d1pbjm39n0063ghnfgn;
 ALTER TABLE IF EXISTS product_variants ALTER COLUMN sku DROP NOT NULL;
+
+-- Hibernate adds CHECK constraints listing enum values when it creates a column; drop them so new values
+-- (e.g. PaymentMethod.SSLCOMMERZ) can be stored. The Java enum still restricts what gets written.
+ALTER TABLE IF EXISTS orders DROP CONSTRAINT IF EXISTS orders_payment_method_check;
+ALTER TABLE IF EXISTS orders DROP CONSTRAINT IF EXISTS orders_payment_status_check;
+ALTER TABLE IF EXISTS orders DROP CONSTRAINT IF EXISTS orders_status_check;

@@ -21,3 +21,6 @@
   padding: 18px 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius); color: #166534;
 }
 .order-placed p { color: var(--text-secondary); font-size: 0.9rem; margin-top: 2px; }
+.order-placed.tone-bad { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.order-placed.tone-warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.order-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }

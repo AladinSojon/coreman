@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { Banknote, Check } from 'lucide-react';
+import { Banknote, Check, CreditCard, Lock } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import { formatPrice } from '../utils/price';
 import { siteInfo } from '../siteInfo';
+import { getOnlinePayments } from '../utils/paymentOptions';
 import './CheckoutPage.css';
 
 // Bangladeshi mobile: 01XXXXXXXXX, optionally prefixed with +88 / 88.
@@ -23,6 +24,10 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [cartLoaded, setCartLoaded] = useState(false);
   const orderPlaced = useRef(false);
+  const [onlineEnabled, setOnlineEnabled] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('COD');
+
+  useEffect(() => { getOnlinePayments().then(setOnlineEnabled); }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -58,10 +63,24 @@ export default function CheckoutPage() {
     setProcessing(true); setError('');
     try {
       const addrRes = await api.post('/api/addresses', { ...address, phone, label: 'Shipping', isDefault: true });
-      const orderRes = await api.post('/api/orders', { shippingAddressId: addrRes.data.id, paymentMethod: 'COD' });
+      const method = paymentMethod === 'SSLCOMMERZ' && onlineEnabled ? 'SSLCOMMERZ' : 'COD';
+      const orderRes = await api.post('/api/orders', { shippingAddressId: addrRes.data.id, paymentMethod: method });
+      const orderNumber = orderRes.data.orderNumber;
       orderPlaced.current = true;
-      navigate(`/orders?placed=${encodeURIComponent(orderRes.data.orderNumber)}`);
       fetchCart(); // refresh the (now empty) cart badge
+
+      if (method === 'SSLCOMMERZ') {
+        try {
+          const { data } = await api.post('/api/payments/sslcommerz/init', { orderNumber });
+          window.location.assign(data.gatewayUrl); // SSLCommerz payment page
+          return;
+        } catch {
+          // Order exists but the gateway didn't start: let the customer retry from My Orders.
+          navigate(`/orders?payment=retry&order=${encodeURIComponent(orderNumber)}`);
+          return;
+        }
+      }
+      navigate(`/orders?placed=${encodeURIComponent(orderNumber)}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Checkout failed. Please try again.');
     } finally { setProcessing(false); }
@@ -108,20 +127,40 @@ export default function CheckoutPage() {
 
           <section className="checkout-section">
             <h2><span className="step-num">2</span> Payment</h2>
-            <div className="pay-option selected" role="radio" aria-checked="true">
-              <Banknote size={22} />
-              <div>
-                <strong>Cash on Delivery</strong>
-                <p>Pay the courier in cash when your order arrives.</p>
-              </div>
-              <Check size={18} className="pay-check" />
+            <div role="radiogroup" aria-label="Payment method" className="pay-options">
+              {onlineEnabled && (
+                <button type="button" role="radio" aria-checked={paymentMethod === 'SSLCOMMERZ'}
+                  className={`pay-option ${paymentMethod === 'SSLCOMMERZ' ? 'selected' : ''}`} onClick={() => setPaymentMethod('SSLCOMMERZ')}>
+                  <CreditCard size={22} />
+                  <div>
+                    <strong>Pay online</strong>
+                    <p>bKash, Nagad, Rocket, Visa, Mastercard or internet banking — secured by SSLCommerz.</p>
+                    <span className="pay-brands">bKash · Nagad · Rocket · VISA · Mastercard</span>
+                  </div>
+                  {paymentMethod === 'SSLCOMMERZ' && <Check size={18} className="pay-check" />}
+                </button>
+              )}
+              <button type="button" role="radio" aria-checked={paymentMethod === 'COD'}
+                className={`pay-option ${paymentMethod === 'COD' ? 'selected' : ''}`} onClick={() => setPaymentMethod('COD')}>
+                <Banknote size={22} />
+                <div>
+                  <strong>Cash on Delivery</strong>
+                  <p>Pay the courier in cash when your order arrives.</p>
+                </div>
+                {paymentMethod === 'COD' && <Check size={18} className="pay-check" />}
+              </button>
             </div>
           </section>
 
           {error && <div className="auth-error">{error}</div>}
           <button className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={processing}>
-            {processing ? 'Placing order…' : `Place order — ${formatPrice(total)}`}
+            {processing
+              ? (paymentMethod === 'SSLCOMMERZ' ? 'Opening secure payment…' : 'Placing order…')
+              : paymentMethod === 'SSLCOMMERZ' ? `Pay ${formatPrice(total)} securely` : `Place order — ${formatPrice(total)}`}
           </button>
+          {paymentMethod === 'SSLCOMMERZ' && (
+            <p className="checkout-note"><Lock size={12} /> You'll be taken to SSLCommerz to pay. Unpaid online orders are cancelled after 1 hour.</p>
+          )}
           <p className="checkout-note">By placing your order you agree to our <a href="/pages/terms">terms</a>. We'll call to confirm before shipping.</p>
         </form>
 
@@ -143,7 +182,7 @@ export default function CheckoutPage() {
           {shipping > 0 && (
             <p className="free-ship-hint">Add {formatPrice(siteInfo.freeShippingThreshold - subtotal)} more for free shipping.</p>
           )}
-          <div className="summary-row total"><span>Total (pay on delivery)</span><span>{formatPrice(total)}</span></div>
+          <div className="summary-row total"><span>Total{paymentMethod === 'COD' ? ' (pay on delivery)' : ''}</span><span>{formatPrice(total)}</span></div>
         </div>
       </div>
     </div>

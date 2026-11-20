@@ -52,6 +52,16 @@ cors:
 # Inserts any missing standard categories on startup (never edits existing ones)
 coreman:
   seed-categories: ${SEED_CATEGORIES:true}
+  # Public URLs: SSLCommerz sends customers back to the backend, which then redirects to the shop.
+  backend-url: ${BACKEND_URL:http://localhost:8080}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  payments:
+    unpaid-timeout-minutes: 60   # unpaid online orders are cancelled (stock returned) after this
+    sslcommerz:
+      # Online payment is enabled when both are set. Get sandbox keys at developer.sslcommerz.com.
+      store-id: ${SSLCOMMERZ_STORE_ID:}
+      store-password: ${SSLCOMMERZ_STORE_PASSWORD:}
+      sandbox: ${SSLCOMMERZ_SANDBOX:true}   # set to false with your LIVE store credentials
   # Automatic collections
   collections:
     new-days: 30            # a product is a New Arrival for this many days after it's added (unless "new until" is set)

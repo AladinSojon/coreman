@@ -30,6 +30,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductVariantRepository variantRepository;
     private final AddressRepository addressRepository;
+    private final SslCommerzService sslCommerz;
 
     @Transactional
     public OrderResponse placeOrder(Long userId, PlaceOrderRequest request) {
@@ -65,6 +66,12 @@ public class OrderService {
             throw new BadRequestException("A phone number is required so the courier can reach you");
         }
         PaymentMethod paymentMethod = request.paymentMethod() != null ? request.paymentMethod() : PaymentMethod.COD;
+        if (paymentMethod == PaymentMethod.SSLCOMMERZ && !sslCommerz.isEnabled()) {
+            throw new BadRequestException("Online payment isn't available right now. Please choose Cash on Delivery.");
+        }
+        if (paymentMethod == PaymentMethod.SSLCOMMERZ && total.compareTo(new BigDecimal("10")) < 0) {
+            throw new BadRequestException("Online payment needs an order total of at least ৳10.");
+        }
 
         // Create order
         Order order = Order.builder()
@@ -139,6 +146,10 @@ public class OrderService {
             throw new BadRequestException("Order does not belong to user");
         }
 
+        // A paid order needs a refund through the payment gateway, so staff handle that cancellation.
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new BadRequestException("This order is already paid. Please contact us to cancel it and get a refund.");
+        }
         if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.CONFIRMED) {
             throw new BadRequestException("Order cannot be cancelled in current status: " + order.getStatus());
         }

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MessageCircle, X, Send, HelpCircle } from 'lucide-react';
 import { siteInfo } from '../siteInfo';
-import { FAQ, answerFor } from './chatbotFaq';
+import { FAQ, answerFor, resolveAnswer } from './chatbotFaq';
+import { useOnlinePayments } from '../utils/paymentOptions';
 import './ChatWidget.css';
 
 const STORAGE_KEY = 'coreman-chat'; // per-tab chat history (sessionStorage)
@@ -59,6 +60,7 @@ function WhatsAppIcon({ size = 26 }) {
 /** Basic FAQ chatbot (no AI): quick-question buttons plus keyword matching, with WhatsApp for everything else. */
 export default function ChatWidget() {
   const { pathname } = useLocation();
+  const online = useOnlinePayments();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState(loadHistory);
   const [input, setInput] = useState('');
@@ -90,12 +92,12 @@ export default function ChatWidget() {
     setTimeout(() => { setTyping(false); setMessages(m => [...m, { role: 'bot', ...answer }]); }, 450);
   };
 
-  const ask = (faq) => !typing && reply(faq.question, { content: faq.answer });
+  const ask = (faq) => !typing && reply(faq.question, { content: resolveAnswer(faq, { online }) });
   const send = () => {
     const text = input.trim();
     if (!text || typing) return;
     setInput('');
-    reply(text, answerFor(text));
+    reply(text, answerFor(text, { online }));
   };
 
   const last = messages[messages.length - 1];

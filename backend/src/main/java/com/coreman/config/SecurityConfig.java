@@ -45,6 +45,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/*/reviews").permitAll()
                         .requestMatchers("/api/payments/webhook").permitAll()
+                        // SSLCommerz posts the customer's browser and its IPN here (no login); /init needs a signed-in customer.
+                        .requestMatchers("/api/payments/sslcommerz/status", "/api/payments/sslcommerz/success",
+                                "/api/payments/sslcommerz/fail", "/api/payments/sslcommerz/cancel",
+                                "/api/payments/sslcommerz/ipn").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

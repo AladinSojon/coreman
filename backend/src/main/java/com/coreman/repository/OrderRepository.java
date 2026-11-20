@@ -45,6 +45,12 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     @EntityGraph(attributePaths = {"user", "shippingAddress"})
     List<Order> findTop6ByOrderByCreatedAtDesc();
 
+    /** Online orders still unpaid and pending since before the cutoff (abandoned payments). */
+    @Query("SELECT o.id FROM Order o WHERE o.paymentMethod = com.coreman.model.enums.PaymentMethod.SSLCOMMERZ " +
+            "AND o.paymentStatus = com.coreman.model.enums.PaymentStatus.UNPAID " +
+            "AND o.status = com.coreman.model.enums.OrderStatus.PENDING AND o.createdAt < :cutoff")
+    List<Long> findAbandonedOnlineOrders(@Param("cutoff") LocalDateTime cutoff);
+
     /** [productId, unitsSold] for active products, best first, from non-cancelled orders since the date. */
     @Query("SELECT v.product.id, SUM(oi.quantity) FROM OrderItem oi JOIN oi.variant v " +
             "WHERE oi.order.status <> com.coreman.model.enums.OrderStatus.CANCELLED AND oi.order.createdAt >= :since " +

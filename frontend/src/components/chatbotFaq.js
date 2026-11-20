@@ -18,7 +18,10 @@ export const FAQ = [
     id: 'payment',
     question: 'How can I pay?',
     keywords: ['pay', 'payment', 'cash', 'cod', 'bkash', 'nagad', 'card', 'online', 'advance', 'পেমেন্ট', 'বিকাশ', 'ক্যাশ'],
-    answer: `We currently take **Cash on Delivery** only — you pay the courier when your parcel arrives. No advance payment is needed.`,
+    // A function: the answer depends on whether online payment is switched on.
+    answer: ({ online }) => online
+      ? `You can choose at checkout:\n- **Pay online** — bKash, Nagad, Rocket, Visa, Mastercard or internet banking, secured by SSLCommerz.\n- **Cash on Delivery** — pay the courier when your parcel arrives.`
+      : `We currently take **Cash on Delivery** only — you pay the courier when your parcel arrives. No advance payment is needed.`,
   },
   {
     id: 'returns',
@@ -73,8 +76,13 @@ export const FAQ = [
 const GREETINGS = ['hi', 'hello', 'hey', 'salam', 'assalamu', 'হাই', 'হ্যালো', 'আসসালামু'];
 const THANKS = ['thanks', 'thank you', 'thx', 'ধন্যবাদ'];
 
+/** An FAQ's answer text; `ctx` carries runtime facts such as { online } for answers that depend on them. */
+export function resolveAnswer(faq, ctx = {}) {
+  return typeof faq.answer === 'function' ? faq.answer(ctx) : faq.answer;
+}
+
 /** Pick the best answer for a free-text message, or a fallback that offers a product search. */
-export function answerFor(text) {
+export function answerFor(text, ctx = {}) {
   const t = text.toLowerCase().trim();
   const words = t.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 
@@ -91,7 +99,7 @@ export function answerFor(text) {
     }
     if (score > bestScore) { best = f; bestScore = score; }
   }
-  if (best) return { content: best.answer };
+  if (best) return { content: resolveAnswer(best, ctx) };
 
   const clean = text.trim().replace(/[[\]()*]/g, '').slice(0, 40);
   const q = encodeURIComponent(clean);
