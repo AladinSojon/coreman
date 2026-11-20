@@ -74,7 +74,10 @@ public class PaymentController {
             case CANCELLED -> "cancelled";
             default -> "failed";
         };
-        String target = frontendUrl + "/orders?payment=" + payment
+        // Guests have no My Orders page; send them to Track Order (they re-enter their phone there).
+        boolean guest = r.orderNumber() != null && orderRepository.findByOrderNumber(r.orderNumber())
+                .map(o -> Boolean.TRUE.equals(o.getUser().getGuest())).orElse(false);
+        String target = frontendUrl + (guest ? "/track" : "/orders") + "?payment=" + payment
                 + (r.orderNumber() != null ? "&order=" + URLEncoder.encode(r.orderNumber(), StandardCharsets.UTF_8) : "");
         return ResponseEntity.status(HttpStatus.SEE_OTHER).header(HttpHeaders.LOCATION, URI.create(target).toString()).build();
     }

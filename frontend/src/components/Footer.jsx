@@ -31,7 +31,7 @@ export default function Footer() {
             <Link to="/pages/contact">Contact us</Link>
             <Link to="/pages/shipping">Shipping & delivery</Link>
             <Link to="/pages/returns">Returns & exchanges</Link>
-            <Link to="/orders">Track my order</Link>
+            <Link to="/track">Track my order</Link>
           </div>
           <div>
             <h4>Company</h4>

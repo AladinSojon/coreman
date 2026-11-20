@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import WishlistPage from './pages/WishlistPage';
+import TrackOrderPage from './pages/TrackOrderPage';
 import InfoPage from './pages/InfoPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ScrollToTop from './components/ScrollToTop';
@@ -42,6 +43,7 @@ export default function App() {
               <Route path="/orders" element={<OrdersPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="/track" element={<TrackOrderPage />} />
               <Route path="/pages/:slug" element={<InfoPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>

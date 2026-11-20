@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Banknote, Check, CreditCard, Lock } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,7 @@ import api from '../api/client';
 import { formatPrice } from '../utils/price';
 import { siteInfo } from '../siteInfo';
 import { getOnlinePayments } from '../utils/paymentOptions';
+import { loadGuestDetails, saveGuestDetails, rememberGuestOrder } from '../utils/guestOrders';
 import './CheckoutPage.css';
 
 // Bangladeshi mobile: 01XXXXXXXXX, optionally prefixed with +88 / 88.
@@ -15,7 +16,7 @@ const normalisePhone = (p) => p.replace(/[\s-]/g, '');
 
 export default function CheckoutPage() {
   const { user, loading: authLoading } = useAuth();
-  const { cart, fetchCart } = useCart();
+  const { cart, fetchCart, guestLines, clearCart } = useCart();
   const navigate = useNavigate();
   const [address, setAddress] = useState({
     recipientName: '', phone: '', street: '', city: '', zipCode: '', country: 'Bangladesh',
@@ -30,7 +31,14 @@ export default function CheckoutPage() {
   useEffect(() => { getOnlinePayments().then(setOnlineEnabled); }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+    if (!user) {
+      // Guest: browser cart, and details remembered on this device from a previous order.
+      fetchCart().finally(() => setCartLoaded(true));
+      const d = loadGuestDetails();
+      if (d) setAddress(prev => ({ ...prev, ...d }));
+      return;
+    }
     fetchCart().finally(() => setCartLoaded(true));
     // Prefill from the most recently saved address.
     api.get('/api/addresses').then(r => {
@@ -44,7 +52,7 @@ export default function CheckoutPage() {
     }).catch(() => {
       setAddress(prev => ({ ...prev, recipientName: `${user.firstName || ''} ${user.lastName || ''}`.trim() }));
     });
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Empty cart → back to the cart page. Skipped once an order is placed (placing it empties the cart).
   useEffect(() => {
@@ -52,7 +60,6 @@ export default function CheckoutPage() {
   }, [cartLoaded, cart, navigate]);
 
   if (authLoading) return null;
-  if (!user) return <Navigate to="/login" />;
 
   const set = (k) => (e) => setAddress({ ...address, [k]: e.target.value });
 
@@ -61,6 +68,7 @@ export default function CheckoutPage() {
     const phone = normalisePhone(address.phone);
     if (!BD_PHONE.test(phone)) { setError('Please enter a valid Bangladeshi mobile number, e.g. 01712345678.'); return; }
     setProcessing(true); setError('');
+    if (!user) { await placeGuestOrder(phone); return; }
     try {
       const addrRes = await api.post('/api/addresses', { ...address, phone, label: 'Shipping', isDefault: true });
       const method = paymentMethod === 'SSLCOMMERZ' && onlineEnabled ? 'SSLCOMMERZ' : 'COD';
@@ -86,6 +94,34 @@ export default function CheckoutPage() {
     } finally { setProcessing(false); }
   };
 
+  // Checkout without an account: order number + phone are all a guest needs to track or pay later.
+  const placeGuestOrder = async (phone) => {
+    const method = paymentMethod === 'SSLCOMMERZ' && onlineEnabled ? 'SSLCOMMERZ' : 'COD';
+    try {
+      const { data: order } = await api.post('/api/guest/orders', {
+        items: guestLines(), recipientName: address.recipientName, phone,
+        street: address.street, city: address.city, zipCode: address.zipCode, paymentMethod: method,
+      });
+      orderPlaced.current = true;
+      saveGuestDetails({ ...address, phone });
+      rememberGuestOrder(order.orderNumber, phone);
+      clearCart();
+      if (method === 'SSLCOMMERZ') {
+        try {
+          const { data } = await api.post('/api/guest/payments/init', { orderNumber: order.orderNumber, phone });
+          window.location.assign(data.gatewayUrl);
+          return;
+        } catch {
+          navigate(`/track?payment=retry&order=${encodeURIComponent(order.orderNumber)}`);
+          return;
+        }
+      }
+      navigate(`/track?placed=1&order=${encodeURIComponent(order.orderNumber)}`);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Checkout failed. Please try again.');
+    } finally { setProcessing(false); }
+  };
+
   const subtotal = Number(cart.subtotal || 0);
   const shipping = subtotal >= siteInfo.freeShippingThreshold ? 0 : siteInfo.shippingFee;
   const total = subtotal + shipping;
@@ -93,6 +129,9 @@ export default function CheckoutPage() {
   return (
     <div className="page container">
       <h1 className="page-title">Checkout</h1>
+      {!user && (
+        <p className="guest-note">Checking out as a guest — no account needed. Have an account? <Link to="/login">Sign in</Link></p>
+      )}
       <div className="checkout-layout">
         <form className="checkout-form" onSubmit={handleSubmit}>
           <section className="checkout-section">

@@ -45,6 +45,11 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    /** Created by guest checkout (no password the customer knows; can't sign in). */
+    @Column(name = "is_guest")
+    @Builder.Default
+    private Boolean guest = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

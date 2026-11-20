@@ -33,13 +33,13 @@ export const FAQ = [
     id: 'track',
     question: 'Where is my order?',
     keywords: ['track', 'order status', 'where is my order', 'my order', 'status', 'shipped', 'not received', 'late', 'অর্ডার', 'কোথায়'],
-    answer: `Sign in and open [My Orders](/orders) to see the status of every order (Pending → Confirmed → Shipped → Delivered).\nIf something looks wrong, message us with your order number.`,
+    answer: `Open [Track your order](/track) and enter your order number (it starts with CM-) and the phone number you ordered with — no account needed.\nWith an account, all your orders are under [My Orders](/orders). If something looks wrong, message us with your order number.`,
   },
   {
     id: 'cancel',
     question: 'How do I cancel an order?',
     keywords: ['cancel', 'cancellation', 'change address', 'change order', 'বাতিল'],
-    answer: `Orders that are still **Pending** or **Confirmed** can be cancelled from [My Orders](/orders).\nIf it has already shipped, or you need to change the address, please contact us as soon as possible.`,
+    answer: `Orders that are still **Pending** or **Confirmed** (and not yet paid online) can be cancelled on [Track your order](/track) or [My Orders](/orders).\nIf it has already shipped, or you need to change the address, please contact us as soon as possible.`,
   },
   {
     id: 'size',
@@ -51,7 +51,7 @@ export const FAQ = [
     id: 'order',
     question: 'How do I place an order?',
     keywords: ['how to order', 'place order', 'buy', 'purchase', 'checkout', 'order kivabe', 'কিভাবে', 'কিনব'],
-    answer: `1. Open a product, choose colour and size, and tap **Add to Cart** (or **Buy Now**).\n2. Go to the cart and **Checkout**.\n3. Enter your name, mobile number and address, then **Place order** — you pay cash on delivery.\nYou'll need an account; [create one here](/register).`,
+    answer: `1. Open a product, choose colour and size, and tap **Add to Cart** (or **Buy Now**).\n2. Go to the cart and **Checkout**.\n3. Enter your name, mobile number and address, then **Place order** — you pay cash on delivery.\nNo account needed — just your name, phone and address. You can also [create an account](/register) to see all your orders in one place.`,
   },
   {
     id: 'sale',

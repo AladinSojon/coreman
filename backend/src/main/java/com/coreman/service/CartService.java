@@ -102,6 +102,35 @@ public class CartService {
         cartItemRepository.deleteByUserId(userId);
     }
 
+    /**
+     * Cart for a guest (kept in the browser): names, current prices, images and stock from the database.
+     * Item ids are the variant ids. Unknown or hidden products are dropped; quantities are capped at stock.
+     */
+    @Transactional(readOnly = true)
+    public CartResponse preview(List<com.coreman.dto.request.GuestOrderRequest.Item> lines) {
+        java.util.Map<Long, Integer> qty = new java.util.LinkedHashMap<>();
+        if (lines != null) {
+            for (var l : lines.stream().limit(50).toList()) {
+                if (l != null && l.variantId() != null && l.quantity() != null && l.quantity() > 0) {
+                    qty.merge(l.variantId(), Math.min(l.quantity(), 20), Integer::sum);
+                }
+            }
+        }
+        List<CartResponse.CartItemResponse> items = new java.util.ArrayList<>();
+        for (var e : qty.entrySet()) {
+            variantRepository.findById(e.getKey())
+                    .filter(v -> Boolean.TRUE.equals(v.getProduct().getIsActive()))
+                    .ifPresent(v -> {
+                        int q = Math.max(0, Math.min(e.getValue(), v.getStockQuantity()));
+                        CartItem tmp = CartItem.builder().id(v.getId()).variant(v).quantity(q).build();
+                        items.add(mapCartItem(tmp));
+                    });
+        }
+        BigDecimal subtotal = items.stream().map(CartResponse.CartItemResponse::totalPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+        int total = items.stream().mapToInt(CartResponse.CartItemResponse::quantity).sum();
+        return new CartResponse(items, subtotal, total);
+    }
+
     private CartResponse buildCartResponse(List<CartItem> items) {
         List<CartResponse.CartItemResponse> itemResponses = items.stream()
                 .map(this::mapCartItem)

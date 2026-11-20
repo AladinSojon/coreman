@@ -32,7 +32,7 @@ function printInvoice(o) {
   <div class="muted">${esc(STATUS_LABEL[o.status] || o.status)}</div></div></div>
   <div class="box"><div><h3>Ship to</h3><strong>${esc(a.recipientName || `${o.user?.firstName || ''} ${o.user?.lastName || ''}`)}</strong><br>
   ${esc(a.phone || '')}<br>${esc(a.street || '')}<br>${esc(a.city || '')} ${esc(a.zipCode || '')}<br>${esc(a.country || '')}</div>
-  <div><h3>Customer</h3>${esc(o.user?.email || '')}<br><h3 style="margin-top:12px">Payment</h3>${o.paymentMethod === 'SSLCOMMERZ' ? 'Online (SSLCommerz)' + (o.paymentChannel ? ' — ' + esc(o.paymentChannel) : '') : 'Cash on Delivery'} ·${esc(STATUS_LABEL[o.paymentStatus] || o.paymentStatus)}</div></div>
+  <div><h3>Customer</h3>${o.user?.guest ? 'Guest checkout' : esc(o.user?.email || '')}<br><h3 style="margin-top:12px">Payment</h3>${o.paymentMethod === 'SSLCOMMERZ' ? 'Online (SSLCommerz)' + (o.paymentChannel ? ' — ' + esc(o.paymentChannel) : '') : 'Cash on Delivery'} ·${esc(STATUS_LABEL[o.paymentStatus] || o.paymentStatus)}</div></div>
   <table><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Total</th></tr></thead><tbody>${rows}</tbody></table>
   <table style="width:280px;margin-left:auto;margin-top:8px">
     <tr class="tot"><td>Subtotal</td><td class="r">${taka(o.subtotal)}</td></tr>
@@ -125,7 +125,7 @@ function OrderDrawer({ order, onClose, onChanged, toast }) {
             <div>
               <h4>Customer</h4>
               <p>{order.user?.firstName} {order.user?.lastName}</p>
-              <p className="muted">{order.user?.email}</p>
+              <p className="muted">{order.user?.guest ? 'Guest checkout (no account)' : order.user?.email}</p>
             </div>
           </section>
 
@@ -222,7 +222,7 @@ export default function OrdersTab({ params, setParams }) {
               <tr key={o.id} className="clickable" onClick={() => setOpen(o)} tabIndex={0} onKeyDown={e => e.key === 'Enter' && setOpen(o)}>
                 <td><strong>{o.orderNumber}</strong>{o.adminNote && <StickyNote size={12} className="note-flag" aria-label="Has note" />}</td>
                 <td>{o.shippingAddress?.recipientName || `${o.user?.firstName} ${o.user?.lastName}`}
-                  <small className="cell-sub">{o.shippingAddress?.phone || o.user?.email}</small></td>
+                  <small className="cell-sub">{o.shippingAddress?.phone || o.user?.email}{o.user?.guest ? ' · guest' : ''}</small></td>
                 <td>{o.items?.reduce((s, i) => s + i.quantity, 0) || 0}</td>
                 <td className="r"><strong>{taka(o.total)}</strong></td>
                 <td><Pill value={o.status} /></td>

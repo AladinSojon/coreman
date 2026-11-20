@@ -196,16 +196,17 @@ export default function Navbar() {
         <div className="nav-actions">
           <button className="nav-icon" onClick={() => setSearchOpen(!searchOpen)}><Search size={20} /></button>
 
+          {user && <Link to="/wishlist" className="nav-icon" aria-label="Wishlist"><Heart size={20} /></Link>}
+          {/* Cart works with or without an account */}
+          <Link to="/cart" className="nav-icon cart-icon" aria-label={`Cart, ${cart.totalItems} items`}>
+            <ShoppingBag size={20} />
+            {cart.totalItems > 0 && <span className="cart-badge">{cart.totalItems}</span>}
+          </Link>
           {user ? (
             <>
-              <Link to="/wishlist" className="nav-icon"><Heart size={20} /></Link>
-              <Link to="/cart" className="nav-icon cart-icon">
-                <ShoppingBag size={20} />
-                {cart.totalItems > 0 && <span className="cart-badge">{cart.totalItems}</span>}
-              </Link>
-              {isAdmin && <Link to="/admin" className="nav-icon"><LayoutDashboard size={20} /></Link>}
-              <Link to="/orders" className="nav-icon"><User size={20} /></Link>
-              <button className="nav-icon" onClick={logout}><LogOut size={20} /></button>
+              {isAdmin && <Link to="/admin" className="nav-icon" aria-label="Admin"><LayoutDashboard size={20} /></Link>}
+              <Link to="/orders" className="nav-icon" aria-label="My orders"><User size={20} /></Link>
+              <button className="nav-icon" onClick={logout} aria-label="Sign out"><LogOut size={20} /></button>
             </>
           ) : (
             <Link to="/login" className="btn btn-sm btn-primary">Sign In</Link>

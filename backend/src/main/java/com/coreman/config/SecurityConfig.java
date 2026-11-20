@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/*/reviews").permitAll()
                         .requestMatchers("/api/payments/webhook").permitAll()
+                        // Guest checkout: cart preview, orders, tracking, guest payment (rate-limited in GuestController)
+                        .requestMatchers("/api/guest/**").permitAll()
                         // SSLCommerz posts the customer's browser and its IPN here (no login); /init needs a signed-in customer.
                         .requestMatchers("/api/payments/sslcommerz/status", "/api/payments/sslcommerz/success",
                                 "/api/payments/sslcommerz/fail", "/api/payments/sslcommerz/cancel",

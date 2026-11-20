@@ -24,7 +24,7 @@ function CustomerDrawer({ id, onClose, go }) {
             </div>
             <section className="drawer-section">
               <h4>Contact</h4>
-              <p><a className="phone-link" href={`mailto:${c.email}`}><Mail size={14} /> {c.email}</a></p>
+              {c.email ? <p><a className="phone-link" href={`mailto:${c.email}`}><Mail size={14} /> {c.email}</a></p> : <p className="muted">Guest checkout (no account)</p>}
               {[...new Set([c.phone, ...d.addresses.map(a => a.phone)].filter(Boolean))].map(p => (
                 <p key={p}><a className="phone-link" href={`tel:${p}`}><Phone size={14} /> {p}</a></p>
               ))}
@@ -84,7 +84,7 @@ export default function CustomersTab({ params, setParams, go }) {
           <tbody>
             {data.content.map(c => (
               <tr key={c.id} className="clickable" onClick={() => setOpen(c.id)} tabIndex={0} onKeyDown={e => e.key === 'Enter' && setOpen(c.id)}>
-                <td><strong>{c.name}</strong>{c.role === 'ADMIN' && <span className="pill pill-admin">Admin</span>}<small className="cell-sub">{c.email}</small></td>
+                <td><strong>{c.name}</strong>{c.role === 'ADMIN' && <span className="pill pill-admin">Admin</span>}{c.role === 'GUEST' && <span className="pill pill-unpaid" style={{ marginLeft: 8 }}>Guest</span>}<small className="cell-sub">{c.email || c.phone}</small></td>
                 <td className="nowrap muted">{dateOnly(c.joinedAt)}</td>
                 <td className="r">{c.orders}</td>
                 <td className="r"><strong>{taka(c.totalSpent)}</strong></td>

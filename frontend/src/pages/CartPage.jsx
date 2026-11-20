@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -9,16 +9,15 @@ export default function CartPage() {
   const { cart, fetchCart, updateQuantity, removeItem } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
-  useEffect(() => { if (user) fetchCart(); }, [user]);
+  useEffect(() => { fetchCart(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!user) return (
-    <div className="page container text-center" style={{ paddingTop: 100 }}>
-      <ShoppingBag size={64} strokeWidth={1} style={{ color: 'var(--text-muted)', marginBottom: 24 }} />
-      <h2>Sign in to view your cart</h2>
-      <Link to="/login" className="btn btn-primary" style={{ marginTop: 24 }}>Sign In</Link>
-    </div>
-  );
+  const change = async (item, qty) => {
+    setError('');
+    if (qty > item.stockQuantity) { setError(`Only ${item.stockQuantity} of ${item.productName} (${item.size}) in stock.`); return; }
+    try { await updateQuantity(item.id, qty); } catch (e) { setError(e.response?.data?.message || 'Could not update the cart.'); }
+  };
 
   if (cart.items.length === 0) return (
     <div className="page container text-center" style={{ paddingTop: 100 }}>
@@ -32,6 +31,7 @@ export default function CartPage() {
   return (
     <div className="page container">
       <h1 className="page-title">Shopping Cart ({cart.totalItems} items)</h1>
+      {error && <div className="auth-error" style={{ marginBottom: 16 }}>{error}</div>}
       <div className="cart-layout">
         <div className="cart-items">
           {cart.items.map(item => (
@@ -46,9 +46,9 @@ export default function CartPage() {
               </div>
               <div className="cart-item-actions">
                 <div className="pdp-quantity">
-                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={14} /></button>
+                  <button onClick={() => change(item, item.quantity - 1)}><Minus size={14} /></button>
                   <span>{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={14} /></button>
+                  <button onClick={() => change(item, item.quantity + 1)}><Plus size={14} /></button>
                 </div>
                 <p className="cart-item-total">৳{item.totalPrice?.toFixed(2)}</p>
                 <button className="cart-remove" onClick={() => removeItem(item.id)}><Trash2 size={16} /></button>
@@ -65,6 +65,7 @@ export default function CartPage() {
           <button className="btn btn-primary" style={{ width: '100%', marginTop: 16 }} onClick={() => navigate('/checkout')}>
             Checkout <ArrowRight size={16} />
           </button>
+          {!user && <p className="free-shipping-note" style={{ color: 'var(--text-secondary)' }}>No account needed — check out with your phone number.</p>}
           {cart.subtotal < 2000 && <p className="free-shipping-note">Add ৳{(2000 - cart.subtotal).toFixed(2)} more for free shipping</p>}
         </div>
       </div>

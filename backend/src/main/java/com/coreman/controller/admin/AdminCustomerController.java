@@ -79,8 +79,9 @@ public class AdminCustomerController {
     }
 
     private static CustomerRow row(User u, Object[] s) {
-        return new CustomerRow(u.getId(), (u.getFirstName() + " " + u.getLastName()).trim(), u.getEmail(), u.getPhone(),
-                u.getRole().name(), u.getCreatedAt(),
+        boolean guest = Boolean.TRUE.equals(u.getGuest());
+        return new CustomerRow(u.getId(), (u.getFirstName() + " " + u.getLastName()).trim(), guest ? null : u.getEmail(), u.getPhone(),
+                guest ? "GUEST" : u.getRole().name(), u.getCreatedAt(),
                 s == null ? 0 : ((Number) s[1]).longValue(),
                 s == null ? BigDecimal.ZERO : (BigDecimal) s[2],
                 s == null ? null : (LocalDateTime) s[3]);

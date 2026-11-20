@@ -21,6 +21,7 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
+  const [cartError, setCartError] = useState('');
 
   const loadProduct = (resetSelection) => api.get(`/api/products/${slug}`)
     .then(r => {
@@ -48,22 +49,22 @@ export default function ProductDetailPage() {
   const wasPrice = product.compareAtPrice != null && Number(product.compareAtPrice) > price ? Number(product.compareAtPrice) : null;
   const saved = isSaved(product.id);
 
+  // No account needed: guests get a browser cart and check out with name + phone + address.
   const handleAddToCart = async () => {
-    if (!user) { navigate('/login'); return; }
     if (!selectedVariant) return;
-    setAdding(true);
-    try { await addToCart(selectedVariant.id, quantity); } catch {}
+    setAdding(true); setCartError('');
+    try { await addToCart(selectedVariant.id, quantity); }
+    catch (e) { setCartError(e.response?.data?.message || e.message || 'Could not add to cart.'); setAdding(false); return; }
     setTimeout(() => setAdding(false), 1000);
   };
 
   const handleBuyNow = async () => {
-    if (!user) { navigate('/login'); return; }
     if (!selectedVariant) return;
-    setAdding(true);
+    setAdding(true); setCartError('');
     try {
       await addToCart(selectedVariant.id, quantity);
       navigate('/checkout');
-    } catch {}
+    } catch (e) { setCartError(e.response?.data?.message || e.message || 'Could not add to cart.'); }
     setAdding(false);
   };
 
@@ -171,6 +172,7 @@ export default function ProductDetailPage() {
           {selectedVariant && selectedVariant.stockQuantity <= 5 && selectedVariant.stockQuantity > 0 && (
             <p className="stock-warning">Only {selectedVariant.stockQuantity} left in stock!</p>
           )}
+          {cartError && <p className="stock-warning" role="alert">{cartError}</p>}
 
           <ul className="pdp-perks">
             <li>Cash on Delivery available</li>

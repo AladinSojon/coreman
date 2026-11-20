@@ -132,7 +132,8 @@ public class AdminOrderService {
             List<Object> cols = List.of(
                     o.getOrderNumber(), o.getCreatedAt() != null ? o.getCreatedAt().format(fmt) : "",
                     o.getStatus(), o.getPaymentMethod() != null ? o.getPaymentMethod() : PaymentMethod.COD, o.getPaymentStatus(),
-                    o.getUser().getFirstName() + " " + o.getUser().getLastName(), o.getUser().getEmail(),
+                    o.getUser().getFirstName() + " " + o.getUser().getLastName(),
+                    Boolean.TRUE.equals(o.getUser().getGuest()) ? "(guest checkout)" : o.getUser().getEmail(),
                     a != null && a.getRecipientName() != null ? a.getRecipientName() : "",
                     a != null && a.getPhone() != null ? a.getPhone() : "",
                     a != null ? a.getStreet() : "", a != null ? a.getCity() : "", a != null ? a.getZipCode() : "",

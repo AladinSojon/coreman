@@ -1,0 +1,23 @@
+.track-page { max-width: 760px; padding-bottom: 40px; }
+.track-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: end; padding: 20px; max-width: 700px; }
+.track-form:hover { box-shadow: none; }
+.track-form .btn { height: 46px; }
+.track-recent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; font-size: 0.85rem; color: var(--text-secondary); }
+.track-recent .chip { padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg-card); font-weight: 600; font-size: 0.8rem; }
+.track-recent .chip:hover { border-color: var(--ink); }
+.track-result { margin-top: 20px; max-width: 700px; }
+.track-help { margin-top: 18px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.9rem; max-width: 700px; }
+.track-help a { color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+
+.track-steps { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); margin: 4px 0 18px; }
+.track-steps li { position: relative; text-align: center; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); padding-top: 22px; }
+.track-steps li span { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; border-radius: 50%; background: var(--bg-card); border: 2px solid var(--border-hover); z-index: 1; }
+.track-steps li::before { content: ''; position: absolute; top: 6px; left: -50%; width: 100%; height: 2px; background: var(--border); }
+.track-steps li:first-child::before { display: none; }
+.track-steps li.done { color: var(--text-primary); }
+.track-steps li.done span { background: var(--success); border-color: var(--success); }
+.track-steps li.done::before { background: var(--success); }
+
+@media (max-width: 640px) {
+  .track-form { grid-template-columns: 1fr; }
+}
