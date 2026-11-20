@@ -23,14 +23,29 @@ export default function ProductDetailPage() {
   const [adding, setAdding] = useState(false);
   const [cartError, setCartError] = useState('');
 
+  // Index of the gallery photo for a colour (the variant's own picture), or -1 when there isn't one.
+  const imageForColor = (p, color) => {
+    const url = p.variants?.find(v => v.color === color && v.imageUrl)?.imageUrl;
+    return url ? (p.images || []).findIndex(i => i.imageUrl === url) : -1;
+  };
+
+  const pickColor = (p, color) => {
+    setSelectedColor(color);
+    setSelectedSize(null);
+    const i = imageForColor(p, color);
+    if (i >= 0) setSelectedImage(i);
+  };
+
   const loadProduct = (resetSelection) => api.get(`/api/products/${slug}`)
     .then(r => {
       setProduct(r.data);
       if (resetSelection && r.data.variants?.length) {
+        // Start on the colour shown in the main photo, so the picture and the selection agree.
         const colors = [...new Set(r.data.variants.map(v => v.color))];
-        setSelectedColor(colors[0]);
-        setSelectedSize(null);
+        const mainUrl = r.data.images?.[0]?.imageUrl;
+        const first = colors.find(c => r.data.variants.some(v => v.color === c && v.imageUrl === mainUrl)) || colors[0];
         setSelectedImage(0);
+        pickColor(r.data, first);
         setQuantity(1);
       }
     });
@@ -117,7 +132,7 @@ export default function ProductDetailPage() {
               <div className="pdp-colors">
                 {colors.map(c => (
                   <button key={c} className={`color-swatch ${c === selectedColor ? 'active' : ''}`}
-                    style={{ background: colorHexMap[c] }} onClick={() => { setSelectedColor(c); setSelectedSize(null); }} />
+                    style={{ background: colorHexMap[c] }} onClick={() => pickColor(product, c)} aria-label={c} title={c} />
                 ))}
               </div>
             </div>
